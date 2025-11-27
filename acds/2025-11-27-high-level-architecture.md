@@ -43,14 +43,14 @@ L1 → (L2 → L2.1) → L3 → L4
 
 ### **Key Generation**
 - L1 generated externally or provided by customer (BYOK/HYOK/CYOK)
-- L2/L2.1 generated internally and wrapped by L1
+- L2(L2.1) generated internally and wrapped by L1
 - L3 generated at service level and wrapped by L2
 - L4 generated at edge level on behind of customer and wrapped by L3
 
 ### **Key Rotation**
 - **L1**: Rotated per external KMS/HSM policy. Manual rotation supported for BYOK.
-- **L2**: Rotated on tenant lifecycle events or scheduled rotation.
-- **L2.1**: Rotated per version or resource-specific requirements.
+- **L2(L2.1)**: Rotated on tenant lifecycle events or scheduled rotation.
+- **L2.1**: Rotated per version or resource-specific requirements based on the L2 Key.
 - **L3**: Rotated on service deployment or security events.
 - **L4**: Ephemeral, rotated per request from client side.
 
@@ -65,15 +65,15 @@ L1 → (L2 → L2.1) → L3 → L4
 
 OpenKCM abstracts multiple external and internal keystore implementations:
 
-| Keystore Type | Supported Layers | Notes |
-|---------------|----------------|------|
-| AWS KMS | L1, L2 | Supports BYOK, automatic rotation, IAM integration |
-| Azure Key Vault | L1, L2 | Key Vault policies control access |
-| GCP KMS | L1, L2 | Can integrate with internal L2/L3 keys |
-| Vault/OpenBao | L1-L3 | Internal multi-tenant keys, HSM integration optional |
-| HSMs (Thales, nShield, IBM) | L1 | Required for HYOK deployments, offline key storage |
-| Internal Keystore | L2.1, L3, L4 | Managed internally, supports key versioning |
-
+| Keystore Type               | Supported Layers | Notes                                                |
+|-----------------------------|------------------|------------------------------------------------------|
+| AWS KMS                     | L1               | Supports BYOK, automatic rotation, IAM integration   |
+| Azure Key Vault             | L1               | Key Vault policies control access                    |
+| GCP KMS                     | L1               | Can integrate with internal L2/L3 keys               |
+| Vault/OpenBao               | L2-L3            | Internal multi-tenant keys, HSM integration optional |
+| HSMs (Thales, nShield, IBM) | L1               | Required for HYOK deployments, offline key storage   |
+| Internal Keystore           | L2(L2.1), L3     | Managed internally, supports key versioning          |
+| Edge Internal Keystore      | L4               | Managed internally at edge                           |
 ---
 
 ## 5. Master Key Management
@@ -98,7 +98,7 @@ OpenKCM abstracts multiple external and internal keystore implementations:
 ## 6. Encryption Flow (L1 → L4)
 
 1. **L1** encrypts **L2 keys**
-2. **L2** encrypts **L2.1** and/or **L3 keys**
+2. **L2** encrypts **L3 keys**
 3. **L3** encrypts **L4 keys**
 4. **L4** used for ephemeral encrypt/decrypt at crypto edge
 5. Data flow:
@@ -112,7 +112,7 @@ OpenKCM abstracts multiple external and internal keystore implementations:
 ## 7. Security Controls
 
 - **Access Control**
-    - Tenant isolation enforced at L2/L2.1
+    - Tenant isolation enforced at L2(L2.1)
     - Service-level access restricted via IAM/ACL
 - **Audit Logging**
     - Key creation, rotation, and access logged
@@ -153,7 +153,7 @@ OpenKCM abstracts multiple external and internal keystore implementations:
 ## 10. Use Cases
 
 1. **Multi-Tenant SaaS**
-    - Each tenant has independent L2/L2.1 keys
+    - Each tenant has independent L2(L2.1) keys
     - Tenant data encrypted end-to-end
 2. **Cloud Migration**
     - Keys can be moved between cloud KMS providers

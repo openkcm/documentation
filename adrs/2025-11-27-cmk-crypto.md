@@ -16,13 +16,12 @@ OpenKCM requires a secure, multi-layered key management system to:
 
 The system must protect keys at different layers:
 
-| Layer | Role | Scope |
-|-------|------|-------|
-| L1 | Customer Master Key (CMK) | Tenant root/global |
-| L2 | Tenant Encryption Key | Per-tenant |
-| L2.1 | Tenant Versioned Key | Per-version/per-resource |
-| L3 | Service Encryption Key | Per-service |
-| L4 | Crypto Edge Key | Ephemeral, per request/session |
+| Layer    | Role                      | Scope                          |
+|----------|---------------------------|--------------------------------|
+| L1       | Customer Master Key (CMK) | Tenant root/global             |
+| L2(L2.1) | Tenant Encryption Key     | Per-tenant                     |
+| L3       | Service Encryption Key    | Per-service                    |
+| L4       | Crypto Edge Key           | Ephemeral, per request/session |
 
 **Related diagrams:**
 
