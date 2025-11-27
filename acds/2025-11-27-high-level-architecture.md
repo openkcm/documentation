@@ -1,6 +1,6 @@
 ---
 authors:
-  - NicolaeNicora # Change to your own handle. Add yourself to "authors.yml" if necessary.
+  - Nicolae Nicora
 ---
 
 # High Level Architecture
