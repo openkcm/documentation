@@ -116,8 +116,6 @@ We decided to implement **OpenKCM (Key Chan Management)** with the following des
 
 ---
 
-## Sequence Diagram (Mermaid)
-
 ```mermaid
 sequenceDiagram
     participant Client as Client Service
