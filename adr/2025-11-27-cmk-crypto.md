@@ -3,7 +3,7 @@ authors:
   - Nicolae Nicora
 ---
 
-# Hierarchical Key Management CMK and Crypto
+# Hierarchical Key Management on Crypto
 
 OpenKCM requires a secure, multi-layered key management system to:
 
