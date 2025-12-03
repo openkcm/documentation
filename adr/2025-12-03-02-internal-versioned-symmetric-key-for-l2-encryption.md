@@ -57,11 +57,11 @@ The MasterKey is produced and maintained via:
 ```mermaid
 flowchart TD
     MK[<b>MasterKey</b><br/>Immutable<br/>SSS or Seal]
-    IVK[<b>Internal Versioned Key (IVK)</b><br/>AES-256-GCM<br/>Rotatable]
+    IVK[<b>Internal Versioned Key 'IVK'</b><br/>AES-256-GCM<br/>Rotatable]
     L2[L2 Tenant Key]
     L21[L2.x Versioned Tenant Keys]
     L3[L3 Service Keys]
-    L4[L4 DEKs (client side)]
+    L4[L4 DEKs 'client side']
 
     MK -->|Encrypts<br/>every IVK version| IVK
     IVK -->|Encrypts| L21
