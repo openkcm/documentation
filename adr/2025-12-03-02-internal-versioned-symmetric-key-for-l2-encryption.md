@@ -30,7 +30,6 @@ The **MasterKey** serves as the immutable root of trust and is used to encrypt/d
 > **MasterKey MUST NEVER rotate.  
 > It is a stable root key for the lifetime of the deployment.**
 
----
 
 ## Decision
 
@@ -83,7 +82,6 @@ The storage and encryption boundaries for each key type are summarized below:
 | L3.x       | Symmetric | Encrypted blob          | L2.x         | Yes        | Per-service                  |
 | L4 (DEK)   | Symmetric | Wrapped value           | L3.x         | Ephemeral  | Client-side data encryption  |
 
----
 
 ## IVK Generation and Rotation
 

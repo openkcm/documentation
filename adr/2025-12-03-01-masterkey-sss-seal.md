@@ -21,12 +21,10 @@ The MasterKey must:
 - Survive multi-cloud outages
 - Provide deterministic recovery workflows
 
----
 
 ## Decision
-OpenKCM will support **two MasterKey lifecycle modes**:
+OpenKCM Crypto will support **two MasterKey lifecycle modes**:
 
----
 
 ### **1. Shamir Secret Sharing (SSS) Mode**
 Used for:
@@ -46,8 +44,6 @@ Properties:
 - Each encrypted shard is stored in the DB (never plaintext)
 - Created using **M shards** at service startup
 
----
-
 ### **2. Seal / Auto-Unseal Mode**
 Used for:
 - Cloud-native SaaS  
@@ -64,7 +60,6 @@ Properties:
 - Encrypted blob stored in DB
 - Automatically decrypted on service startup
 
----
 
 ## Architecture Diagrams
 
@@ -103,7 +98,7 @@ flowchart LR
 ```mermaid
 flowchart LR
     MK[MasterKey]
-    SEAL[Seal Provider (AWS/Azure/GCP/HSM/OpenBao)]
+    SEAL[Seal Provider AWS/Azure/GCP/HSM/OpenBao]
     DB[(Encrypted MasterKey Blob)]
 
     MK -->|Encrypt| SEAL --> DB
