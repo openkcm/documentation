@@ -11,7 +11,7 @@ authors:
 ### Group 1: High-Level Strategy & Governance
 * [**ADR-001-Tiered-Envelope-Encryption-Model.md**](001-Tiered-Envelope-Encryption-Model.md)
     * *Context:* Defines the L1–L4 hierarchy where each parent key encrypts its child.
-* **ADR-002-Separation-of-Governance-CMK-and-Execution-Crypto.md**
+* [**ADR-002-Separation-of-Governance-CMK-and-Execution-Crypto.md**](002-Separation-of-Governance-CMK-and-Execution-Crypto.md)
     * *Context:* Decouples customer trust (L1) from high-performance internal execution.
 * **ADR-003-Multi-Tenant-Cryptographic-Isolation-Standard.md**
     * *Context:* Establishes mathematical siloing for shared infrastructure.
