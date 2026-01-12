@@ -50,7 +50,7 @@ authors:
 * **ADR-017-Secure-Bootstrapping-and-Secret-Injection-Policy.md**
     * *Context:* How initial secrets and shards are securely delivered to new nodes during scaling.
 
-### Group 5: CMK Service (Governance Layer)
+### Group 5: CMK Service (Customer Managed Key Layer)
 * **ADR-018-Pluggable-KMS-Provider-Interface.md**
     * *Context:* Driver architecture for AWS KMS, GCP KMS, Azure Vault, and HSMs.
 * **ADR-019-L1-Key-Reference-Storage-and-Metadata-Schema.md**
@@ -60,18 +60,18 @@ authors:
 * **ADR-021-BYOK-and-HYOK-Onboarding-Workflows.md**
     * *Context:* Procedures for integrating customer-provided keys into the L1 layer.
 
-### Group 6: Crypto Edge (Performance Layer)
-* **ADR-022-Edge-Sidecar-Deployment-Pattern.md**
-    * *Context:* Deciding on the sidecar pattern for low-latency operations in Kubernetes.
-* **ADR-023-L4-DEK-Generation-and-Ephemeral-Lifecycle.md**
-    * *Context:* Management of session/request-based ephemeral keys at the workload edge.
-* **ADR-024-Secure-In-Memory-Caching-and-Eviction-Policy.md**
-    * *Context:* Protecting plaintext material only in secure compute memory with strict TTLs.
+### Group 6: Crypto (Core & Edge Dual-Service Model)
+* **ADR-022-Crypto-Core-Central-Orchestration-and-KEK-Lifecycle.md**
+  * *Context:* Defines the Core service role in orchestrating L2 (Tenant) and L3 (Service) key lifecycles, and managing MasterKey unsealing via **Seal modes**.
+* **ADR-023-Crypto-Edge-Workload-Orchestration-and-DEK-Lifecycle.md**
+  * *Context:* Defines the Edge service role in orchestrating L4 (DEK) keys directly at the application workload level.
+* **ADR-024-KMIP-Functional-Split-between-Core-and-Edge.md**
+  * *Context:* Establishes that **Crypto Core** handles L3 (KEK) operations (excluding Create/Get), while **Crypto Edge** provides high-performance L4 operations (Create, Get, Encrypt, Decrypt).
 * **ADR-025-Sub-Millisecond-Latency-KPIs-and-Measurement.md**
-    * *Context:* Establishing performance baselines to ensure security doesn't cause churn.
+  * *Context:* Establishing performance baselines to ensure the Edge-level cryptographic operations do not impact application throughput.
 
 ### Group 7: Protocols & Communication
-* **ADR-026-KMIP-1.4-Protocol-Adoption-and-Extensions.md**
+* **ADR-026-KMIP-Protocol-Adoption-and-Extensions.md**
     * *Context:* Standardization on Key Management Interoperability Protocol for client requests.
 * **ADR-027-JSON-Web-Token-JWT-vs-Certificate-Identity.md**
     * *Context:* Justification for using mTLS certificates over JWTs for long-lived service identities.
