@@ -7,7 +7,6 @@ authors:
 
 **Status:** Proposed  
 **Date:** 2025-11-27  
-**Technical Story:** Keychain cryptographic isolation for multi-tenant SaaS
 
 
 ## Context
