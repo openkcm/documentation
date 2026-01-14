@@ -1,6 +1,6 @@
 ---
 authors:
-  - Aysan Mazloumi
+  - Aysan
 ---
 
 ## Persona
