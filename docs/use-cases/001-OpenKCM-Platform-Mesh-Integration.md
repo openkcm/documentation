@@ -4,7 +4,7 @@ authors:
 ---
 
 ## Persona
-**Platform Users** - Anyone with access to an account in KCP who enables OpenKCM via Platform Mesh and accesses the OpenKCM CMK UI for management of their keychain (e.g., configuring CMK with HYOK or BYOK). These users interact exclusively with the CMK Layer of OpenKCM through the web interface, while the Crypto Service operates as an integrated backend service.
+**Platform Users** - Anyone with access to an account in Platform who enables OpenKCM via Platform Mesh and accesses the OpenKCM CMK UI for management of their keychain (e.g., configuring CMK with HYOK or BYOK). These users interact exclusively with the CMK Layer of OpenKCM through the web interface, while the Crypto Service operates as an integrated backend service.
 
 ## Overview
 
