@@ -12,6 +12,8 @@ Instead of using a single key to encrypt millions of records, OpenKCM organizes 
 ## The Hierarchy Definitions
 OpenKCM standardizes four distinct levels of keys, each with a specific scope, lifecycle, and "Owner."
 
+![key-chain-representation.png](.images/key-chain-representation.png)
+
 ### L1: The Root of Trust (External)
 * **Scope:** The entire Tenant or Organization.
 * **Owner:** The Customer (Sovereign).
