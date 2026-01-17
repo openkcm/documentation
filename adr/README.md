@@ -21,26 +21,26 @@
 * [**ADR-201: MasterKey Immutability & Volatile Memory**](masterkey-definition-and-immutability-standard.md)
   * **Context:** How to handle the internal "Key of Keys."
   * **Decision:** The MasterKey is never written to disk. It exists only in `mlock` protected RAM and must be reconstructed at every process restart.
-* **ADR-202: Shamir Secret Sharing (SSS) for Human Unsealing**
+* [**ADR-202: Shamir Secret Sharing (SSS) for Human Unsealing**](masterkey-reconstruction-via-shamir-secret-sharing.md)
   * **Context:** Emergency recovery when Cloud KMS is unavailable.
   * **Decision:** Split the MasterKey into $N$ shards with a threshold of $M$ required for reconstruction ($M-of-N$ scheme).
-* **ADR-203: Cloud-Native Auto-Unseal (Seal Wrapping)**
+* *[*ADR-203: Cloud-Native Auto-Unseal (Seal Wrapping)**](cloud-native-auto-unseal-seal-wrapper.md)
   * **Context:** Enabling automated scaling without manual human intervention.
   * **Decision:** The MasterKey blob is encrypted by a cloud-native Transit Key (AWS KMS / Azure KeyVault) allowing the node to "boot and decrypt" itself automatically.
-* **ADR-204: MasterKey Storage and Shard Encryption Policy**
+* [**ADR-204: MasterKey Storage and Shard Encryption Policy**](masterkey-storage-and-shard-encryption-policy.md)
   * *Context:* Policies for encrypting shards using different keystores (AWS, Azure, GCP, HSM).
 
 ### III. Internal Key Logic & Rotation (The IVK)
 *Decisions regarding the "Internal Versioned Key" (IVK) which bridges the MasterKey to the Tenant Keys.*
 
-* [**ADR-301: The IVK (Internal Versioned Key) Architecture**](ivk-logical-architecture-and-versioning-schema.md)
+* [**ADR-301: The IVK (Internal Versioned Key) Architecture**](ivk-architecture.md)
   * **Context:** Preventing a "God Key" scenario where one MasterKey encrypts billions of objects.
   * **Decision:** Introduce the **IVK** as an intermediate, rotatable key layer. The MasterKey wraps the IVK; the IVK wraps the L2 Tenant Keys.
-* **ADR-302: IVK Mapping Logic to L2 Tenant Keys**
+* [**ADR-302: IVK Mapping Logic to L2 Tenant Keys**](ivk-mapping-logic-to-l2-tenant-keys.md)
   * *Context:* Technical implementation of how IVKs wrap per-tenant L2 keys.
-* **ADR-303: IVK Rotation Triggers & Grace Period Management**
+* [**ADR-303: IVK Rotation Triggers & Grace Period Management**](ivk-rotation-triggers-and-grace-period-management.md)
   * *Context:* Logic for periodic rotation to new IVK versions for forward security.
-* **ADR-304: IVK Metadata Persistence & Cache-Policy**
+* [**ADR-304: IVK Metadata Persistence & Cache-Policy**](ivk-metadata-persistence-and-cache-policy.md)
   * *Context:* Standards for storing and retrieving versioned IVK encrypted blobs.
 
 ### IV: Security, Identity & Authorization

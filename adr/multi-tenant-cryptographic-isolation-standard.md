@@ -71,5 +71,5 @@ Regardless of the plugin, the Edge enforces **Namespace Isolation**:
   * *Mitigation:* The Edge interface treats all L4 keys as immutable or short-lived, reducing sync issues.
 
 ## References
-* [ADR-101: Separation of Governance and Execution](governance-execution-separation.md)
+* [ADR-101: Separation of Governance and Execution](separation-of-governance-cmk-and-execution-crypto.md)
 * [HashiCorp Vault: Secrets Engines](https://developer.hashicorp.com/vault/docs/secrets)

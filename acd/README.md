@@ -33,9 +33,9 @@ This index defines the high-level conceptual frameworks and strategic paradigms 
   * **Concept**: The automated logic for time-based and event-based rotation. Defines "Lazy Re-encryption" vs. "Deep Re-keying" strategies to ensure security hygiene without forcing application downtime.
 
 ### IV. Ecosystem Integration & Resilience
-* **ACD-401: Pluggable Keystore Interface (KSI) Framework**
+* [**ACD-401: Pluggable Keystore Interface (KSI) Framework**](pluggable-keystore-interface-ksi-framework.md)
   * **Concept**: The abstraction layer allowing OpenKCM to support heterogeneous external providers (AWS KMS, Azure Key Vault, GCP KMS, Thales, Fortanix) through a unified driver model.
-* **ACD-402: Global Resilience & Sovereign Reconciliation**
+* [**ACD-402: Global Resilience & Sovereign Reconciliation**](global-resilience-and-sovereign-reconciliation.md)
   * **Concept**: The strategy for cross-region disaster recovery, ensuring that Orbital can re-hydrate regional node state from the central Registry without compromising cryptographic boundaries.
 * **ACD-403: Application Integration Patterns & SDKs**
   * **Concept**: The developer experience manual. Defines the standard patterns for integrating SaaS workloads with OpenKCM, including the use of Client SDKs, Sidecars, and local caching strategies for L4 keys.
