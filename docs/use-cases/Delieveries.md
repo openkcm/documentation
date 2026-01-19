@@ -15,3 +15,5 @@ MVP Crypto Goals by End of June 2026:
 ✅ MongoDB integration - Transparent database encryption via KMIP
 ✅ Basic tenant isolation - Separate key storage per tenant
 ✅ Key generation service - Create encryption keys for MongoDB collections
+
+For the Crypto MVP the assumptions is: Master Key is the created internal versioned keys.
