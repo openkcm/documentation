@@ -56,7 +56,7 @@
     * *Context:* How initial secrets and shards are securely delivered to new nodes during scaling.
 
 ### V: CMK Service (Customer Managed Key Layer)
-* **ADR-501: Pluggable KMS Provider Interface**
+* [**ADR-501: Pluggable KMS Provider Interface**](pluggable-kms-provider-interface.md)
     * *Context:* Driver architecture for AWS KMS, GCP KMS, Azure Vault, and HSMs.
 * **ADR-502: L1 Key Reference Storage and Metadata Schema**
     * *Context:* Handling encrypted references without touching plaintext material.
@@ -66,13 +66,13 @@
     * *Context:* Procedures for integrating customer-provided keys into the L1 layer.
 
 ### VI: Crypto (Core & Edge Dual-Service Model)
-* **ADR-601: Crypto Core Central Orchestration and KEK Lifecycle**
+* [**ADR-601: Crypto Core Central Orchestration and KEK Lifecycle**](crypto-core-central-orchestration-and-kek-lifecycle.md)
   * *Context:* Defines the Core service role in orchestrating L2 (Tenant) and L3 (Service) key lifecycles, and managing MasterKey unsealing via **Seal modes**.
-* **ADR-602: Crypto Edge Workload Orchestration and DEK Lifecycle**
+* [**ADR-602: Crypto Edge Workload Orchestration and DEK Lifecycle**](crypto-edge-workload-orchestration-and-dek-lifecycle.md)
   * *Context:* Defines the Edge service role in orchestrating L4 (DEK) keys directly at the application workload level.
-* **ADR-603: KMIP Functional Split between Core and Edge**
+* [**ADR-603: KMIP Functional Split between Core and Edge**](kmip-functional-split-between-core-and-edge.md)
   * *Context:* Establishes that **Crypto Core** handles L3 (KEK) operations (excluding Create/Get), while **Crypto Edge** provides high-performance L4 operations (Create, Get, Encrypt, Decrypt).
-* **ADR-604: Sub Millisecond Latency KPIs and Measurement**
+* [**ADR-604: Sub Millisecond Latency KPIs and Measurement**](sub-millisecond-latency-kpis-and-measurement.md)
   * *Context:* Establishing performance baselines to ensure the Edge-level cryptographic operations do not impact application throughput.
 
 ### VII: Protocols & Communication
