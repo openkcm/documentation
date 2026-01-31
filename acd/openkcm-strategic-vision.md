@@ -9,6 +9,8 @@
 
 In the modern sovereign-cloud era, traditional security is a cost center. OpenKCM transforms security into a **market differentiator** by solving the "Trust Paradox"—the conflict between providing total customer data ownership and the need for high-scale, cloud-native performance.
 
+![high-level-architecture.png](.images/high-level-architecture.png)
+
 ## Structural Pillar: The Governance & Execution Framework
 To achieve absolute sovereignty without performance degradation, OpenKCM enforces a "Church and State" separation between the logic of access and the act of encryption.
 
@@ -69,129 +71,6 @@ The Crypto Layer handles the "operational reality" of security—ensuring that b
 | **Market Access** | Unlocks regulated verticals via root-key control. | Enables high-throughput for AI/Real-time platforms. | Opens high-ACV deals previously blocked by sovereignty concerns. |
 | **Trust & Retention** | Mathematically enforced revocation. | Zero-trust multi-tenancy (no cross-tenant leakage). | Reduces churn in regulated segments; customers stay longer. |
 
-
-```mermaid
-graph TD
-    %% --- Governance Control Plane ---
-    subgraph GCP ["Governance Control Plane\nOpenKCM CMK\n(The Brain & Policy)"]
-        CMK_API ["CMK API Server"]
-        
-        subgraph CMK_Plugins ["Plugins"]
-            P_ID ["Identity"]
-            P_KS ["Keystore"]
-            P_SI ["SystemInfo"]
-            P_NT ["Notify"]
-        end
-
-        L1_Ref [("L1 Key Pointer\n(Shadow Ref)")]
-
-        %% Connections within GCP
-        L1_Ref --> CMK_API
-        CMK_API <--> CMK_Plugins
-        P_KS --> P_ID
-        P_KS --> P_SI
-        P_KS --> P_NT
-    end
-
-    %% --- State Layer ---
-    subgraph State ["State Layer: Postgres DB\n(Active-Standby, Schema-per-Tenant)"]
-        DB_L1 [("L1 Key References")]
-        DB_L2 [("L2 Key Metadata\n(Account)")]
-        DB_L3 [("L3 Key Metadata\n(Service)")]
-        
-        %% Key Hierarchy
-        DB_L1 <-- "Parent" --> DB_L2
-        DB_L2 <-- "Parent" --> DB_L3
-    end
-
-    %% --- Execution Data Plane ---
-    subgraph EDP ["Execution Data Plane\nOpenKCM Crypto\n(The Muscle & Gateway)"]
-        Krypton ["Krypton"]
-        
-        subgraph Krypton_Plugins ["Plugins"]
-            KP_KMS ["Key Material Storage"]
-            KP_KS ["Keystore"]
-        end
-        
-        KMIP_Int_K ["KMIP Interface"]
-        
-        KG ["Krypton Gateway\n(Edge Deployments)"]
-        
-        subgraph KG_Plugins ["Plugins"]
-            KGP_KMS ["Key Material Storage"]
-        end
-        
-        KMIP_Int_KG ["KMIP Interface"]
-
-        %% Connections within EDP
-        Krypton <--> Krypton_Plugins
-        Krypton <--> KMIP_Int_K
-        KG <--> KG_Plugins
-        KG <--> KMIP_Int_KG
-    end
-
-    %% --- External Systems ---
-    subgraph EXT_L1 ["External Physical Vaults\n(L1 Root of Trust)"]
-        AWS_KMS ["AWS KMS"]
-        Azure_KV ["Azure Vault"]
-        GCP_KMS ["GCP KMS"]
-        Thales ["Thales HSM"]
-        HashiCorp_L1 ["HashiCorp"]
-    end
-    
-    subgraph EXT_KM ["External Physical Vaults\n(Key Material Storages)"]
-        OpenBao ["OpenBao"]
-        HashiCorp_KM ["HashiCorp"]
-    end
-
-    %% --- Client Apps ---
-    Client1 ["Client Apps & Services"]
-    L4_Client [("L4 DEK\n(Client-Side)")]
-    
-    Client2 ["Client Apps & Services"]
-    L4_Server [("L4 DEK\n(Server-Side)")]
-
-    %% --- Cross-Layer Connections ---
-    
-    %% GCP to External & State
-    P_KS ==>|Manage L1\n(via Plugins)| EXT_L1
-    CMK_API <==>|"Read/Write Policy & Pointers"| State
-
-    %% EDP to State & External
-    Krypton <-->|"Fetch L2/L3 Key Metadata"| State
-    KP_KS <==>|"Crypto Ops\n(Wrap/Unwrap L2)"| EXT_L1
-    KP_KMS <==>|"Key Material Ops\n(L2 & L3 Key Store)"| EXT_KM
-    KGP_KMS <==>|"Key Material Ops\n(L4 Key Store)"| EXT_KM
-
-    %% Client Interactions
-    Client1 -- "KMIP\nEncrypt/Decrypt Req" --> KMIP_Int_K
-    KMIP_Int_K -.->|Generates| L4_Client
-    L4_Client -.->|Held By| Client1
-
-    Client2 -- "KMIP\nCreate/Get Req" --> KMIP_Int_KG
-    KMIP_Int_KG -.->|Generates & Stores| L4_Server
-    L4_Server -.->|Used By| Client2
-
-    %% CMK to Krypton Link
-    CMK_API <==>|"Orbital Link (gRPC)\nPolicy & Control"| Krypton
-
-    %% Styling
-    classDef controlPlane fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:black;
-    classDef stateLayer fill:#e5e7eb,stroke:#6b7280,stroke-width:2px,color:black;
-    classDef dataPlane fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:black;
-    classDef externalVault fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:black;
-    classDef database fill:#f3f4f6,stroke:#4b5563,stroke-width:2px,color:black,shape:cylinder;
-    classDef component fill:#ffffff,stroke:#9ca3af,stroke-width:1px,color:black;
-    classDef client fill:#f9fafb,stroke:#9ca3af,stroke-width:1px,color:black;
-
-    class GCP,CMK_API,CMK_Plugins,P_ID,P_KS,P_SI,P_NT controlPlane;
-    class State stateLayer;
-    class DB_L1,DB_L2,DB_L3 database;
-    class EDP,Krypton,Krypton_Plugins,KP_KMS,KP_KS,KMIP_Int_K,KG,KG_Plugins,KGP_KMS,KMIP_Int_KG dataPlane;
-    class EXT_L1,AWS_KMS,Azure_KV,GCP_KMS,Thales,HashiCorp_L1,EXT_KM,OpenBao,HashiCorp_KM externalVault;
-    class L1_Ref,L4_Client,L4_Server component;
-    class Client1,Client2 client;
-```
 
 ## Summary
 This document establishes OpenKCM as the **Strategic Growth Catalyst** for the modern sovereign-cloud era. By transforming security from a passive compliance cost into an active market differentiator, it empowers SaaS providers to:
