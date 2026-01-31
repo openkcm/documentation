@@ -5,7 +5,7 @@
 | **Active** | 2026-01-16 | Architecture Design Record |
 
 ## Context
-The **Internal Versioned Key (IVK)** is the regional anchor for tenant isolation. Because the Crypto Core must handle thousands of tenant keys (L2) with sub-millisecond latency, we cannot rely solely on the MasterKey unsealing logic or remote database fetches for every operation.
+The **Internal Versioned Key (IVK)** is the regional anchor for tenant isolation. Because the Crypto (Krypton) must handle thousands of tenant keys (L2) with sub-millisecond latency, we cannot rely solely on the MasterKey unsealing logic or remote database fetches for every operation.
 
 We need a standardized way to persist IVK metadata (state, versions, and cryptobinding) in the **Key Storage Interface (KSI)** and a corresponding caching strategy in **mlock** memory. Without a strict policy, we risk "Key Drift" (where a node uses a stale IVK version) or "Memory Bloat" (where too many old IVK versions consume protected RAM).
 
@@ -23,7 +23,7 @@ Every IVK stored in the KSI must be wrapped by the MasterKey and accompanied by 
 * **Integrity Hash:** An HMAC of the encrypted blob to prevent tampering in the KSI.
 
 ### Caching Tiers
-The Crypto Core will manage IVKs across three distinct memory tiers:
+The Crypto (Krypton) will manage IVKs across three distinct memory tiers:
 
 * **Tier 1: Volatile Hot Cache (mlock RAM):** * Holds the `ACTIVE` and `GRACE` IVK versions in their plaintext ("Green") state.
     * Uses `mlock` to prevent swap-to-disk.
@@ -53,7 +53,7 @@ The Crypto Core will manage IVKs across three distinct memory tiers:
 * **Metadata Overhead:** Storing detailed headers increases the storage footprint in the KSI.
     * **Mitigation:** Headers are lightweight and manageable even at the scale of millions of records.
 * **Complexity:** Managing the transition between Active, Grace, and Deprecated states requires careful coordination.
-    * **Mitigation:** The logic is encapsulated within the **IVK Manager** component of the Crypto Core, abstracting it from the KMIP execution logic.
+    * **Mitigation:** The logic is encapsulated within the **IVK Manager** component of the Crypto (Krypton), abstracting it from the KMIP execution logic.
 
 ## References
 * [ADR-201: MasterKey Immutability & Volatile Memory](masterkey-definition-and-immutability-standard.md)

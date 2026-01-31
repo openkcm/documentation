@@ -9,7 +9,7 @@ While Shamir's Secret Sharing (ADR-202) provides the highest level of sovereignt
 
 **The Problem:** If every pod restart requires 3 humans to manually input shard keys, the "Mean Time To Recovery" (MTTR) becomes hours instead of milliseconds. This invalidates the promise of high-availability SaaS.
 
-**The Requirement:** We require a mechanism that allows the OpenKCM Crypto Core to **automatically decrypt its own MasterKey** upon startup, provided it is running in a trusted, authorized cloud environment.
+**The Requirement:** We require a mechanism that allows the OpenKCM Crypto (Krypton) to **automatically decrypt its own MasterKey** upon startup, provided it is running in a trusted, authorized cloud environment.
 
 ## Decision
 We will implement **Cloud-Native Auto-Unseal** (also known as "Seal Wrapping") by delegating the root trust to a trusted external Cloud KMS.
@@ -22,7 +22,7 @@ Instead of splitting the MasterKey into human-held shards, the MasterKey is gene
 * **The Identity:** The Cloud IAM Role assigned to the Virtual Machine or Pod (e.g., `role/openkcm-crypto-node`).
 
 ### The Boot Sequence
-When a Crypto Core node starts up in "Auto-Unseal Mode":
+When a Crypto (Krypton) node starts up in "Auto-Unseal Mode":
 
 1.  **Identity Verification:** The node proves its identity to the Cloud Provider (via AWS Instance Profile, Azure Managed Identity, or GCP Workload Identity).
 2.  **Fetch Blob:** The node retrieves the *Encrypted MasterKey Blob* from its local configuration or database.

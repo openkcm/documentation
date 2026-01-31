@@ -21,8 +21,8 @@ The **CMK** is the "Brain" of the ecosystem. It manages the **Intent** of securi
 
 ### OpenKCM Crypto: The Execution Plane
 The **Crypto** layer is the "Muscle." It consists of regional and gateway nodes designed for zero-latency cryptographic operations.
-* **OpenKCM Crypto Core:** The regional authority that manages **L2 (Tenant)** and **L3 (Service)** keys. It performs the "Recursive Unsealing" required to activate a tenant's environment and executes stateless **L4 Wrap/Unwrap** operations via KMIP.
-* **OpenKCM Crypto Gateway:** Distributed, high-speed interfaces that generate and manage **L4 (Data)** keys via KMIP. The Gateway operates close to the workload, ensuring sub-millisecond encryption.
+* **OpenKCM Crypto (Krypton):** The regional authority that manages **L2 (Tenant)** and **L3 (Service)** keys. It performs the "Recursive Unsealing" required to activate a tenant's environment and executes stateless **L4 Wrap/Unwrap** operations via KMIP.
+* **OpenKCM Crypto (Krypton) Gateway:** Distributed, high-speed interfaces that generate and manage **L4 (Data)** keys via KMIP. The Gateway operates close to the workload, ensuring sub-millisecond encryption.
 
 ## The Sovereignty Engine: Recursive Unsealing
 OpenKCM enforces security through a tiered key hierarchy where each layer is mathematically bound to the one above it.
@@ -53,12 +53,12 @@ The CMK Layer is the **trust firewall** that allows enterprises to adopt SaaS wi
 ## The Crypto Layer: Operational Excellence
 The Crypto Layer handles the "operational reality" of security—ensuring that billions of operations per day do not degrade the user experience.
 
-### OpenKCM Crypto Core
+### OpenKCM Crypto (Krypton)
 * **Lifecycle Automation**: Handles rotation, versioning, and archiving of L2/L3 keys with zero downtime.
 * **MasterKey Protection**: Reconstructs the internal MasterKey via Shamir Secret Sharing (SSS) or Seal auto-unseal into secure memory only.
 * **Stateless KMIP Execution**: Performs Wrap/Unwrap operations for **L4 DEKs** against the **L3 KEK**. It transmits the result via mTLS but **does not store** the L4 key material.
 
-### OpenKCM Crypto Gateway
+### OpenKCM Crypto (Krypton) Gateway
 * **Dedicated Gateway Service**: Deployed as a standalone service close to workloads, managing high-throughput operations.
 * **Local Persistence & Caching**: Independently handles `Create` and `Get` operations for **L4 DEKs**, securely storing them in a local gateway vault to ensure resilience and performance.
 * **KMIP/mTLS**: All communication uses standardized KMIP over mandatory mutual TLS.

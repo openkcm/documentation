@@ -7,20 +7,20 @@
 ## Overview
 This design document defines the standardized interface through which applications consume cryptographic services in the OpenKCM ecosystem. To ensure broad compatibility without vendor lock-in, OpenKCM adopts the **OASIS Key Management Interoperability Protocol (KMIP)** as its primary data plane API.
 
-Both the **OpenKCM Crypto Core** and **OpenKCM Crypto Gateway** expose KMIP interfaces, but they serve distinct operational roles. This document details the **Split-Horizon Operations Model**, where high-frequency data plane operations are served at the Gateway, while complex lifecycle and wrapping operations are managed by the Core.
+Both the **OpenKCM Crypto (Krypton)** and **OpenKCM Crypto (Krypton) Gateway** expose KMIP interfaces, but they serve distinct operational roles. This document details the **Split-Horizon Operations Model**, where high-frequency data plane operations are served at the Gateway, while complex lifecycle and wrapping operations are managed by the Core.
 
 
 
 ## The Split-Horizon Operations Model
 OpenKCM divides KMIP responsibilities to balance sub-millisecond latency with strict governance and enhanced security isolation.
 
-### Crypto Gateway: The Hot Path (L4 Data Plane)
+### Crypto (Krypton) Gateway: The Hot Path (L4 Data Plane)
 The Gateway is optimized for speed and availability close to the workload. It is the **exclusive** handler for ephemeral Data Encryption Keys (DEKs).
 * **Primary Operations:** `Create` (L4 DEK), `Get` (L4 DEK).
 * **Behavior:** Local execution using cached L3 Service Keys.
-* **Delegation:** All other operations (e.g., `Destroy`, `Revoke`, `Register`) received by the Gateway are securely proxied to the Crypto Core.
+* **Delegation:** All other operations (e.g., `Destroy`, `Revoke`, `Register`) received by the Gateway are securely proxied to the Crypto (Krypton).
 
-### Crypto Core: The Control Path & Key Hierarchy (L2/L3)
+### Crypto (Krypton): The Control Path & Key Hierarchy (L2/L3)
 The Core serves as the authoritative engine for the key hierarchy and lifecycle management. It handles operations related to Key Encryption Keys (KEKs) and acts as the destination for delegated tasks.
 * **Primary Operations:** `Encrypt` (Wrap), `Decrypt` (Unwrap), `Locate`, `Register`, `Activate`, `Destroy`.
 * **Exclusion:** The Core does **not** serve `Create` or `Get` requests for L4 DEKs. These are served only by the Gateway to prevent the storage or transit of L4 keys within the central crypto data plane. This ensures that the most granular level of encryption material remains localized and isolated from the global governance hub.

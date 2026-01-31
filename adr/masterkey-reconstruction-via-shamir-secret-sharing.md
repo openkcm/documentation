@@ -5,7 +5,7 @@
 | **Active** | 2026-01-16 | Architecture Design Record |
 
 ## Context
-The **MasterKey** is the root of trust for the OpenKCM Crypto Core. While Cloud-Native deployments can use "Auto-Unseal" (ADR-203), high-security Sovereign deployments (Banking, Defense, Offline/Air-Gapped) cannot rely on a single external Cloud Provider (AWS/Azure) to bootstrap the trust chain.
+The **MasterKey** is the root of trust for the OpenKCM Crypto (Krypton). While Cloud-Native deployments can use "Auto-Unseal" (ADR-203), high-security Sovereign deployments (Banking, Defense, Offline/Air-Gapped) cannot rely on a single external Cloud Provider (AWS/Azure) to bootstrap the trust chain.
 
 **The Risk:** If we rely on a single administrator to hold a recovery key, that administrator becomes a single point of failure (bus factor) and a high-value target for coercion (insider threat).
 
@@ -27,13 +27,13 @@ During the cluster initialization ("Key Ceremony"), the MasterKey is generated i
 
 
 ### The Unsealing Logic (Reconstruct)
-When the Crypto Core service restarts in "Sealed Mode":
+When the Crypto (Krypton) service restarts in "Sealed Mode":
 1.  **State:** The service enters a `Sealed` state. API returns `503 Service Unavailable (Sealed)`.
 2.  **Input:** Operators visit the `SysAdmin Portal` or use the CLI to submit their individual shards.
     * Operator A submits Shard #1.
     * Operator B submits Shard #3.
     * Operator C submits Shard #5.
-3.  **Reconstruction:** Once the $M$-th shard is received, the Crypto Core combines them in memory to mathematically reconstruct the MasterKey.
+3.  **Reconstruction:** Once the $M$-th shard is received, the Crypto (Krypton) combines them in memory to mathematically reconstruct the MasterKey.
 4.  **Verification:** The derived MasterKey is hashed and compared to a stored `MasterKey_Hash`.
 5.  **Activation:** If valid, the MasterKey is locked into RAM (`mlock`), and the service transitions to `Active`.
 

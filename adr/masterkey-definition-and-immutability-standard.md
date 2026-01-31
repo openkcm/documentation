@@ -5,7 +5,7 @@
 | **Active** | 2026-01-14 | Architecture Design Record |
 
 ## Context
-The **MasterKey** is the root of the internal trust hierarchy for the OpenKCM Crypto Core. It is the "Key of Keys" used to wrap the Internal Versioned Keys (IVKs), which in turn wrap the Tenant Keys (L2).
+The **MasterKey** is the root of the internal trust hierarchy for the OpenKCM Crypto (Krypton). It is the "Key of Keys" used to wrap the Internal Versioned Keys (IVKs), which in turn wrap the Tenant Keys (L2).
 
 **The Risk:** If the MasterKey is compromised, the entire region's data is compromised.
 **The Constraint:** To prevent offline attacks, forensic recovery from stolen hard drives, or swap-file analysis, the MasterKey must **never** be persisted to non-volatile storage (Disk, SSD, Flash) in plaintext.

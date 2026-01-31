@@ -5,7 +5,7 @@
 | **Active** | 2026-01-16 | Architecture Design Record |
 
 ## Context
-The **MasterKey** is the root of trust for the OpenKCM Crypto Core. While previous records define how the key is reconstructed or auto-unsealed, a strict policy is required to govern the **persistence of the encrypted root material** and the **encryption standards for human-held shards**.
+The **MasterKey** is the root of trust for the OpenKCM Crypto (Krypton). While previous records define how the key is reconstructed or auto-unsealed, a strict policy is required to govern the **persistence of the encrypted root material** and the **encryption standards for human-held shards**.
 
 The Risk: If the encrypted MasterKey blob or the Shamir Secret Sharing (SSS) shards are stored with weak encryption or inadequate metadata, the system becomes vulnerable to offline brute-force attacks or "shard substitution" attacks where an attacker replaces a legitimate shard with one they control.
 
@@ -25,7 +25,7 @@ In **Shamir Secret Sharing Mode**, shards are never distributed to humans in pla
 
 * **Mandatory PPKE:** Each shard must be wrapped using the **RSA-4096** or **Ed25519** public key of the designated shard holder.
 * **Shard Identity:** Every shard must contain a signed header identifying the **Shard Index**, the **Cluster Fingerprint**, and the **Threshold (M)** required for reconstruction.
-* **Storage of Shard Blobs:** While humans hold the "Green" unwrap material, the Crypto Core stores the **Wrapped Shard Blobs** in its local database. This allows the system to verify the integrity of a submitted shard before attempting reconstruction.
+* **Storage of Shard Blobs:** While humans hold the "Green" unwrap material, the Crypto (Krypton) stores the **Wrapped Shard Blobs** in its local database. This allows the system to verify the integrity of a submitted shard before attempting reconstruction.
 
 ### Key Ceremony Logs
 Every time the MasterKey is generated, split, or rotated, a **Ceremony Manifest** is created:

@@ -1,11 +1,11 @@
-# ADR-602: Crypto Gateway Workload Orchestration and DEK Lifecycle
+# ADR-602: Crypto (Krypton) Gateway Workload Orchestration and DEK Lifecycle
 
 | Status | Date | Document Type |
 | :--- | :--- | :--- |
 | **Active** | 2026-01-17 | Architecture Design Record |
 
 ## Context
-The **OpenKCM Crypto Gateway** is the "Fast Twitch Muscle" of the platform. Unlike the Core, which manages thousands of stable KEKs (L3), the Gateway deals with **millions of ephemeral DEKs (L4)** every minute.
+The **OpenKCM Crypto (Krypton) Gateway** is the "Fast Twitch Muscle" of the platform. Unlike the Core, which manages thousands of stable KEKs (L3), the Gateway deals with **millions of ephemeral DEKs (L4)** every minute.
 
 **The Problem:**
 1.  **Latency:** If the Gateway calls the Core for every single data record, the network round-trip (20-50ms) kills application throughput.
@@ -57,5 +57,5 @@ The Gateway is **Stateless**. It does *not* store L4 keys in a local database.
     * *Mitigation:* The L3 key is typically scoped to a specific service (not the whole tenant), limiting the blast radius.
 
 ## References
-* [ACD-203: Crypto Gateway – High-Performance Ephemeral Data Plane](../acd/crypto-gateway–high-performance-ephemeral-data-plane.md)
-* [ADR-601: Crypto Core Central Orchestration](crypto-core-central-orchestration-and-kek-lifecycle.md)
+* [ACD-203: Crypto (Krypton) Gateway – High-Performance Ephemeral Data Plane](../acd/crypto-gateway–high-performance-ephemeral-data-plane.md)
+* [ADR-601: Crypto (Krypton) Central Orchestration](crypto-core-central-orchestration-and-kek-lifecycle.md)

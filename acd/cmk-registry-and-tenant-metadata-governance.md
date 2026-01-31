@@ -14,7 +14,7 @@ While the regional **Crypto Service** handles high-speed execution (the "Muscle"
 
 ### Governance vs. Execution
 * **CMK Registry (The Intent):** Records the policy that "Tenant A" (L2 Key) is legally bound to an L1 key located at "AWS KMS ARN:1234".
-* **OpenKCM Crypto Core (The Action):** Uses this metadata to perform the actual recursive unsealing (L4 → L3 → L2 → L1) required to activate tenant services.
+* **OpenKCM Crypto (Krypton) (The Action):** Uses this metadata to perform the actual recursive unsealing (L4 → L3 → L2 → L1) required to activate tenant services.
 
 ## Data Architecture & Entities
 The registry is built on a high-integrity relational model with strict **Row-Level Security (RLS)** to ensure metadata isolation between tenants.

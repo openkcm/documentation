@@ -74,7 +74,7 @@ flowchart TD
 
 ### A. IVK Generation & Rotation
 When the `Rotate_IVK` command is issued (e.g., every 30 days):
-1.  **Generate:** Crypto Core generates a new random AES-256 key (`IVK_v2`).
+1.  **Generate:** Crypto (Krypton) generates a new random AES-256 key (`IVK_v2`).
 2.  **Wrap:** `IVK_v2` is wrapped by the MasterKey.
 3.  **Persist:** The wrapped blob is stored in the `system_keys` table.
 4.  **Promote:** The Registry marks `IVK_v2` as `ACTIVE`. `IVK_v1` becomes `DEPRECATED` (decrypt-only).

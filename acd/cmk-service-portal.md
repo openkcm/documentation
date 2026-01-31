@@ -29,7 +29,7 @@ The CMK manages the metadata and the "Handshake" logic for L1 keys. Adhering to 
 ### Sovereign Revocation (The Kill-Switch)
 When an administrator initiates a revocation in the Portal:
 1.  **State Update:** The L1 key status is marked as `REVOKED/UNLINK` in the central Registry.
-2.  **Orbital Dispatch:** The **Orbital engine** broadcasts a high-priority, low-latency event to all regional **OpenKCM Crypto Core** nodes.
+2.  **Orbital Dispatch:** The **Orbital engine** broadcasts a high-priority, low-latency event to all regional **OpenKCM Crypto (Krypton)** nodes.
 3.  **Memory Purge & Re-encryption:** Regional nodes immediately drop any active L1-derived sessions. The L2 Key (and downstream L3 keys) are not deleted, but the L2 Key is transitioned to a state where it is kept encrypted using the **IVK (Internal Versioned Key)**. This ensures that while the structure remains, it is mathematically locked and cannot be activated without the L1 Key.
 4.  **Verification:** The Portal reflects a "Locked" status, providing verifiable proof that the data silo is secure.
 

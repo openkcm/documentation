@@ -7,7 +7,7 @@
 ## Overview
 **Global Resilience** in OpenKCM defines how the platform survives catastrophic infrastructure failures without compromising cryptographic sovereignty or data consistency. In a distributed key management system, "Resilience" often conflicts with "Security" (e.g., failing open vs. failing closed).
 
-This document details the **Sovereign Reconciliation Strategy**, ensuring that regional Crypto Core clusters can operate autonomously during network partitions while guaranteeing that global governance intent (e.g., a "Revoke" command) is eventually and reliably enforced.
+This document details the **Sovereign Reconciliation Strategy**, ensuring that regional Crypto (Krypton) clusters can operate autonomously during network partitions while guaranteeing that global governance intent (e.g., a "Revoke" command) is eventually and reliably enforced.
 
 ## The Resilience Philosophy: "Local Trust, Global Command"
 OpenKCM is designed as a **Loose Federation of Autonomous Regions**.
@@ -21,13 +21,13 @@ If the connection between the Brain and the Limbs is severed, the Limbs **contin
 ## Disaster Recovery Tiers
 
 ### Tier 1: Regional Autonomy (Network Partition)
-*Scenario: The fiber cut between the US and Europe isolates the EU Crypto Core from the Global Registry.*
+*Scenario: The fiber cut between the US and Europe isolates the EU Crypto (Krypton) from the Global Registry.*
 * **Read Operations (L4 Decrypt):** **Unaffected.** The EU Core has the L2 and IVK keys cached in its local secure memory and local KSI. It continues to serve KMIP traffic.
 * **Write Operations (L4 Encrypt):** **Unaffected.** New DEKs can be generated locally.
 * **Governance Operations (L2 Rotation/Revocation):** **Paused.** The local node cannot confirm the current status of the tenant's L1 key with the central registry. It defaults to the last known good state (cached policy) for a configurable TTL (e.g., 1 hour), after which it fails closed.
 
 ### Tier 2: Region Failure (Cluster Loss)
-*Scenario: The entire `us-west-2` Crypto Core cluster is destroyed.*
+*Scenario: The entire `us-west-2` Crypto (Krypton) cluster is destroyed.*
 * **Data Plane:** KMIP traffic fails over to the nearest healthy region (e.g., `us-east-1`).
 * **Key Hydration:** The survivor region (`us-east-1`) queries the **Global Registry** for the tenant's metadata.
 * **Re-Bootstrap:** The survivor region connects to the Customer's L1 KMS (which is multi-region by default in AWS/Azure) to unwrap the L2 key.

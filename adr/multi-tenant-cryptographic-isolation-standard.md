@@ -12,7 +12,7 @@ OpenKCM must guarantee strict multi-tenant isolation across its entire topology:
 **The Requirement:** We require a **Unified Pluggable Storage Strategy** that enforces isolation while allowing the underlying storage medium to be swapped based on the environment (Cloud vs. On-Prem vs. Gateway).
 
 ## Decision
-We will implement a **Layered Isolation Strategy** utilizing **PostgreSQL Schemas** for Governance and **Pluggable Storage Interfaces (PSI)** for both Crypto Core and Crypto Gateway.
+We will implement a **Layered Isolation Strategy** utilizing **PostgreSQL Schemas** for Governance and **Pluggable Storage Interfaces (PSI)** for both Crypto (Krypton) and Crypto (Krypton) Gateway.
 
 ### 1. Governance Isolation (CMK Service)
 The OpenKCM CMK Registry (Governance Layer) will utilize a **Schema-per-Tenant** architecture within PostgreSQL.
@@ -23,8 +23,8 @@ The OpenKCM CMK Registry (Governance Layer) will utilize a **Schema-per-Tenant**
   * **Connection Routing:** The Database Abstraction Layer identifies the tenant context and sets the `search_path` to that specific schema.
 * **Benefits:** Atomic lifecycle management (Drop Schema) and prevention of SQL injection cross-tenant leakage.
 
-### 2. Crypto Core Isolation (L2/L3 Keys)
-The OpenKCM Crypto Core (Regional Execution Layer) will utilize a **Core Key Storage Interface (KSI)** to manage persistent L2/L3 keys.
+### 2. Crypto (Krypton) Isolation (L2/L3 Keys)
+The OpenKCM Crypto (Krypton) (Regional Execution Layer) will utilize a **Core Key Storage Interface (KSI)** to manage persistent L2/L3 keys.
 
 **The Interface Contract:**
 The Core logic talks to a `CoreStorageProvider` interface. The implementation maps the OpenKCM `Tenant_ID` to the native isolation construct of the backend.
@@ -37,8 +37,8 @@ The Core logic talks to a `CoreStorageProvider` interface. The implementation ma
 | **Cloud KMS (AWS/Azure)** | **Tags & IAM**. Maps `TenantID` $\to$ Resource Tags. | Cloud-Native SaaS. |
 | **Encrypted SQL Blob** | **Table Partitioning**. Maps `TenantID` $\to$ Partitioned Tables. | Simplified / Developer Mode. |
 
-### 3. Crypto Gateway Isolation (L4 Keys)
-The OpenKCM Crypto Gateway (Sidecar/SDK Layer) will utilize an **Gateway Key Storage Interface (EKSI)** to manage ephemeral L4 keys.
+### 3. Crypto (Krypton) Gateway Isolation (L4 Keys)
+The OpenKCM Crypto (Krypton) Gateway (Sidecar/SDK Layer) will utilize an **Gateway Key Storage Interface (EKSI)** to manage ephemeral L4 keys.
 
 **The Interface Contract:**
 The Gateway Sidecar does not assume it is running in a specific environment (Pod, VM, Lambda). It delegates L4 key caching/storage to a `EdgeStorageProvider` plugin.

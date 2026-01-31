@@ -19,7 +19,7 @@ In the OpenKCM ecosystem, we must support two conflicting operational profiles:
 We will enforce a **Split-Horizon KMIP Router** logic at the application SDK and Gateway level. The OpenKCM ecosystem will not be a single KMIP server, but a distributed mesh where specific operations are routed to specific nodes.
 
 ### 1. The Gateway Scope (Hot Path)
-The **Crypto Gateway** is authoritative *only* for ephemeral **L4 Data Encryption Keys (DEKs)**.
+The **Crypto (Krypton) Gateway** is authoritative *only* for ephemeral **L4 Data Encryption Keys (DEKs)**.
 * **Supported Operations:**
     * `Create` (L4 Only)
     * `Get` (L4 Only - from local cache/storage)
@@ -28,7 +28,7 @@ The **Crypto Gateway** is authoritative *only* for ephemeral **L4 Data Encryptio
 * **Behavior:** These operations execute locally in the Gateway process memory. They **never** trigger a synchronous call to the Core (unless the L3 cache is empty).
 
 ### 2. The Core Scope (Control Path)
-The **Crypto Core** is authoritative for **L2 (Tenant)** and **L3 (Service)** Keys and all Lifecycle events.
+The **Crypto (Krypton)** is authoritative for **L2 (Tenant)** and **L3 (Service)** Keys and all Lifecycle events.
 * **Supported Operations:**
     * `Register` (Importing keys)
     * `Rekey` (Rotation)
@@ -38,10 +38,10 @@ The **Crypto Core** is authoritative for **L2 (Tenant)** and **L3 (Service)** Ke
 * **Behavior:** These operations involve database writes (KSI) and Orbital synchronization. They are strictly forbidden at the Gateway.
 
 ### 3. The Proxy Mechanism
-If the Crypto Gateway receives a Control Path request (e.g., `Destroy Key`), it does not reject it outright. Instead, it acts as a **Transparent Proxy**:
+If the Crypto (Krypton) Gateway receives a Control Path request (e.g., `Destroy Key`), it does not reject it outright. Instead, it acts as a **Transparent Proxy**:
 1.  **Identify:** Gateway parser detects `Operation=Destroy`.
 2.  **Authenticate:** Gateway validates the mTLS identity of the caller.
-3.  **Forward:** Gateway tunnels the raw KMIP packet to the upstream Crypto Core via a persistent mTLS connection.
+3.  **Forward:** Gateway tunnels the raw KMIP packet to the upstream Crypto (Krypton) via a persistent mTLS connection.
 4.  **Relay:** Core executes the logic and returns the response; Gateway passes it back to the client.
     *This preserves the illusion of a single endpoint for the application developer.*
 
@@ -58,5 +58,5 @@ If the Crypto Gateway receives a Control Path request (e.g., `Destroy Key`), it 
 
 ## References
 * [ACD-303: KMIP Integration & Crypto Data Plane](../acd/kmip-integration-and-crypto-data-plane.md)
-* [ACD-203: Crypto Gateway – High-Performance Ephemeral Data Plane](../acd/crypto-gateway–high-performance-ephemeral-data-plane.md)
-* [ADR-602: Crypto Gateway Workload Orchestration](crypto-gateway-workload-orchestration-and-dek-lifecycle.md)
+* [ACD-203: Crypto (Krypton) Gateway – High-Performance Ephemeral Data Plane](../acd/crypto-gateway–high-performance-ephemeral-data-plane.md)
+* [ADR-602: Crypto (Krypton) Gateway Workload Orchestration](crypto-gateway-workload-orchestration-and-dek-lifecycle.md)

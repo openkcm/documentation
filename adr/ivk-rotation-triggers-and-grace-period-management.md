@@ -24,7 +24,7 @@ An IVK rotation (the generation of a new version) is triggered by three conditio
 * **Volume (Usage-based):** Triggered after an IVK has performed $2^{32}$ wrap operations to prevent cryptographic wear-out and side-channel analysis.
 
 ## The Version State Machine
-At any given time, a Regional Crypto Core cluster manages three states of IVKs:
+At any given time, a Regional Crypto (Krypton) cluster manages three states of IVKs:
 
 ### Active Version (The "Write" Key)
 * **Definition:** The single latest version ($IVK_{v(n)}$).

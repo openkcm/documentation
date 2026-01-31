@@ -13,19 +13,19 @@
 Based on the latest mesh design, Orbital operates across two primary synchronization tiers to ensure global reach and regional autonomy:
 
 * **Global-to-Regional Sync:** The **CMK Global/Mesh Registry** synchronizes high-level tenant and policy data with regional nodes via **mTLS** and **TLS + IAS JWT**.
-* **Regional-to-Node Sync:** Each regional node orchestrates tasks for its local **OpenKCM Crypto Core** and manages the policy distribution to distributed **OpenKCM Crypto Gateway** components.
+* **Regional-to-Node Sync:** Each regional node orchestrates tasks for its local **OpenKCM Crypto (Krypton)** and manages the policy distribution to distributed **OpenKCM Crypto (Krypton) Gateway** components.
 
 ## The Reconciliation Philosophy: Desired vs. Actual State
 Orbital manages the lifecycle of system state through a continuous "Desired vs. Actual" reconciliation loop.
 
 * **Desired State (Governance):** The authoritative configuration defined in the **Registry Service** and stored in the central **PostgreSQL** database.
-* **Actual State (Execution):** The real-world status of keys and cryptographic silos as reported by regional **OpenKCM Crypto Core** nodes.
+* **Actual State (Execution):** The real-world status of keys and cryptographic silos as reported by regional **OpenKCM Crypto (Krypton)** nodes.
 
 ### The Convergence Loop
 1.  **Detection:** The **Registry Service** and **OpenKCM Controller** monitor the **Registry** for deltas between the intended policy and the current state.
 2.  **Task Generation:** The **CMK Tenant Manager** creates discrete, idempotent tasks (e.g., linking an L1 key to an L2 tenant).
 3.  **Dispatch:** The **CMK API Server** publishes these tasks to the **RabbitMQ Message Broker** using the **MQTP/MQTT** protocol.
-4.  **Regional Execution:** The regional **OpenKCM Crypto Core** consumes the task, performing the necessary unwrap/wrap operations or schema updates.
+4.  **Regional Execution:** The regional **OpenKCM Crypto (Krypton)** consumes the task, performing the necessary unwrap/wrap operations or schema updates.
 5.  **State Reporting:** Upon completion, the regional node updates the central registry, moving the "Actual State" into alignment with the "Desired State".
 
 
@@ -46,7 +46,7 @@ Orbital enforces a tiered delivery system to handle critical security events:
 ## Resilience & Feedback Loops
 
 ### Regional Autonomy
-OpenKCM prioritizes **Availability and Partition Tolerance (AP)**. If a region is isolated from the CMK Mesh, the **OpenKCM Crypto Core** continues to serve existing keys from its local **OpenBao** instance. Once the partition heals, Orbital "re-hydrates" the region by re-playing missed tasks in sequence.
+OpenKCM prioritizes **Availability and Partition Tolerance (AP)**. If a region is isolated from the CMK Mesh, the **OpenKCM Crypto (Krypton)** continues to serve existing keys from its local **OpenBao** instance. Once the partition heals, Orbital "re-hydrates" the region by re-playing missed tasks in sequence.
 
 ### The "Checker" Component
 Every regional cluster includes a **Checker** service that verifies the health of critical components.

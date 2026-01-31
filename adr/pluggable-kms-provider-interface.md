@@ -7,12 +7,12 @@
 ## Context
 OpenKCM is designed to be **KMS-Agnostic**. Our core value proposition is that we can manage keys regardless of where the physical root of trust resides.
 * **The Reality:** Every Cloud Provider (AWS, Azure, GCP) and HSM Vendor (Thales, Entrust) has a different API, authentication model, and error handling structure.
-* **The Risk:** If we hardcode AWS KMS logic directly into the Crypto Core, we create vendor lock-in and make it impossible to deploy OpenKCM in "Sovereign Clouds" or On-Premise environments without massive code refactoring.
+* **The Risk:** If we hardcode AWS KMS logic directly into the Crypto (Krypton), we create vendor lock-in and make it impossible to deploy OpenKCM in "Sovereign Clouds" or On-Premise environments without massive code refactoring.
 
 **The Requirement:** We need a unified abstraction layer that normalizes these disparate backends into a single, consistent interface for the OpenKCM application logic.
 
 ## Decision
-We will implement the **Pluggable Keystore Interface (KSI)** as a strict Go Interface within the Crypto Core.
+We will implement the **Pluggable Keystore Interface (KSI)** as a strict Go Interface within the Crypto (Krypton).
 
 
 

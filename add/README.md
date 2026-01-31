@@ -7,8 +7,8 @@ authors:
 
 ### I. Core Infrastructure & Execution Services
 * **ADD-101: CMK Control Plane & Registry** – Registry database schemas, Governance API specification, and tenant onboarding state machines.
-* **ADD-102: Crypto Core Engine (Regional)** – Regional execution logic, MasterKey memory management, and L1→L3 unsealing sequences.
-* **ADD-103: Crypto Gateway Module (Sidecar)** – High-throughput L4 DEK lifecycle, local caching strategies (LRU), and application sidecar design.
+* **ADD-102: Crypto (Krypton) Engine (Regional)** – Regional execution logic, MasterKey memory management, and L1→L3 unsealing sequences.
+* **ADD-103: Crypto (Krypton) Gateway Module (Sidecar)** – High-throughput L4 DEK lifecycle, local caching strategies (LRU), and application sidecar design.
 * **ADD-104: Sovereign Portal & BYOK Workflows** – Frontend-to-Backend contracts for the "Kill-Switch" and key linkage Wizards.
 
 ### II. Key Lifecycle & Root of Trust

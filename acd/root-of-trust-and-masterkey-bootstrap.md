@@ -20,12 +20,12 @@ OpenKCM employs a recursive envelope encryption model where each layer cryptogra
 | **L2** | Tenant | **Tenant Encryption Key**: Provides mathematical siloing and isolation between unique customers. | Internal Secure Vault / OpenBao |
 | **L2.1** | Tenant Version | **Versioned Tenant Keys**: Facilitates seamless key rotation, rollback, and per-resource versioning. | Internal Registry (Encrypted) |
 | **L3** | Service | **Service Key**: Isolates specific application domains (e.g., "Payments", "PII-Vault", "Logs"). | Internal Secure Storage |
-| **L4** | Workload | **Data Encryption Key (DEK)**: Ephemeral, short-lived keys used for per-record encryption/decryption. | Crypto Gateway Memory (KMIP) |
+| **L4** | Workload | **Data Encryption Key (DEK)**: Ephemeral, short-lived keys used for per-record encryption/decryption. | Crypto (Krypton) Gateway Memory (KMIP) |
 
 
 
 ## MasterKey Management & System Bootstrapping
-To reach an operational state, the **OpenKCM Crypto Core** must reconstruct its internal **MasterKey** to decrypt the system registry and access tenant keys. OpenKCM supports two primary bootstrap modes based on security requirements.
+To reach an operational state, the **OpenKCM Crypto (Krypton)** must reconstruct its internal **MasterKey** to decrypt the system registry and access tenant keys. OpenKCM supports two primary bootstrap modes based on security requirements.
 
 ### Shamir Secret Sharing (SSS) – The "Four-Eyes" Strategy
 In high-security, sovereign, or regulated deployments, the MasterKey is never stored in a single location.

@@ -39,18 +39,18 @@ To explicitly define security boundaries, we classify key states into two catego
 * **🟩 Green Keys (Plaintext):**
     * **Definition:** Raw, usable cryptographic key material.
     * **Storage:** **STRICTLY FORBIDDEN** on disk.
-    * **Memory:** Only exists in `mlock` (locked RAM) within the **Crypto Core** or **Crypto Gateway** process memory.
+    * **Memory:** Only exists in `mlock` (locked RAM) within the **Crypto (Krypton)** or **Crypto (Krypton) Gateway** process memory.
     * **Lifecycle:** Generated on-the-fly or unwrapped just-in-time, then zeroed out immediately after use (or cached briefly in secure memory).
 
 ### The IVK (Internal Versioned Key) Logic
 To manage the lifecycle of internal keys without forcing constant L1 interactions, we introduce the **IVK**.
-* The **IVK** is a regionally rotated intermediate key managed by the OpenKCM Crypto Core.
+* The **IVK** is a regionally rotated intermediate key managed by the OpenKCM Crypto (Krypton).
 * **Dual-Wrapping for Resilience:** The L2 Tenant Key is often persisted in two forms:
     1.  **Sovereign Binding:** Wrapped by the Customer's L1 (for recovery and provenance).
     2.  **Active Binding:** Wrapped by the Regional IVK (for high-speed rotation and internal management).
 
 ## MasterKey Lifecycle Strategy
-The **OpenKCM Crypto Core** requires a "Key of Keys" to protect the IVKs and internal state. We support two bootstrapping modes:
+The **OpenKCM Crypto (Krypton)** requires a "Key of Keys" to protect the IVKs and internal state. We support two bootstrapping modes:
 
 1.  **Seal Auto-Unseal (Cloud Native):**
     * The internal MasterKey is encrypted by a cloud provider key (e.g., AWS KMS Key belonging to the *Provider*).
@@ -64,9 +64,9 @@ The **OpenKCM Crypto Core** requires a "Key of Keys" to protect the IVKs and int
     * *Use Case:* Air-gapped environments or ultra-high security zones where no single cloud provider is trusted.
 
 ## Key Workflow (The "Chain of Custody")
-1.  **L4 Creation:** App requests encryption. **Crypto Gateway** generates a random L4 DEK (Green).
+1.  **L4 Creation:** App requests encryption. **Crypto (Krypton) Gateway** generates a random L4 DEK (Green).
 2.  **L4 Use:** Gateway encrypts data with L4 DEK.
-3.  **L4 Wrapping:** Gateway requests **Crypto Core** to wrap L4.
+3.  **L4 Wrapping:** Gateway requests **Crypto (Krypton)** to wrap L4.
 4.  **Recursive Unseal:**
     * Core checks memory for L3 (Green). If missing:
     * Checks memory for L2 (Green). If missing:
@@ -84,9 +84,9 @@ The **OpenKCM Crypto Core** requires a "Key of Keys" to protect the IVKs and int
 
 ### Negative (Cons) & Mitigations
 * **Complexity:** Managing a 4-layer graph with rotation at every level is engineering-heavy.
-    * *Mitigation:* Automated "Lifecycle Managers" in the Crypto Core handle rotation policies transparently.
+    * *Mitigation:* Automated "Lifecycle Managers" in the Crypto (Krypton) handle rotation policies transparently.
 * **Latency on Cold Start:** The first request requires a full recursive unseal (L1 call), which may take 200-500ms.
-    * *Mitigation:* Aggressive caching of L2/L3 Green Keys in the Crypto Core memory (LRU Cache).
+    * *Mitigation:* Aggressive caching of L2/L3 Green Keys in the Crypto (Krypton) memory (LRU Cache).
 * **Key Loss Risk:** If the L2 key blob is corrupted and the L1 key is revoked, data is permanently lost ("Cryptographic Erasure").
     * *Acceptance:* This is a feature, not a bug. It is the definition of sovereignty.
 

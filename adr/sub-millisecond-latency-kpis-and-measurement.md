@@ -5,7 +5,7 @@
 | **Active** | 2026-01-17 | Architecture Design Record |
 
 ## Context
-The **OpenKCM Crypto Gateway** is marketed as a "Zero-Latency" component. If encryption adds noticeable delay to the application's critical path, developers will bypass it, compromising security.
+The **OpenKCM Crypto (Krypton) Gateway** is marketed as a "Zero-Latency" component. If encryption adds noticeable delay to the application's critical path, developers will bypass it, compromising security.
 * **The Promise:** Encryption should be "effectively free" (< 1ms).
 * **The Reality:** Without strict KPIs and granular observability, latency creeps in due to Garbage Collection (GC), network jitter, or lock contention.
 
@@ -43,4 +43,4 @@ We will implement **Client-Side Histogram Metrics** in the OpenKCM SDK and Sidec
 
 ## References
 * [Google SRE Book: Golden Signals](https://sre.google/sre-book/monitoring-distributed-systems/)
-* [ACD-203: Crypto Gateway Performance](../acd/crypto-gateway–high-performance-ephemeral-data-plane.md)
+* [ACD-203: Crypto (Krypton) Gateway Performance](../acd/crypto-gateway–high-performance-ephemeral-data-plane.md)

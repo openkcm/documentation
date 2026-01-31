@@ -13,7 +13,7 @@ This document defines the **Unified Audit Pipeline**, a system designed to captu
 
 ## The "Glass House" Philosophy
 OpenKCM operates on a principle of radical transparency.
-* **Every Event is Logged:** From a high-level API call in the Portal to a low-level KMIP unwrap operation in the Crypto Core.
+* **Every Event is Logged:** From a high-level API call in the Portal to a low-level KMIP unwrap operation in the Crypto (Krypton).
 * **Every Log is Signed:** Logs are hashed and signed at the source (Regional Node) to prevent tampering during transit.
 * **Every Access is Traceable:** A global `Correlation_ID` links the SaaS user's click to the specific millisecond the L1 Root Key was accessed in AWS KMS.
 
@@ -36,7 +36,7 @@ To ensure interoperability with SIEMs (Splunk, Datadog, Sentinel), OpenKCM stand
 The audit system is built on an asynchronous, reliable delivery model.
 
 1.  **Generation (The Source):**
-    * The **Crypto Core** generates a log entry for an L2 unwrap.
+    * The **Crypto (Krypton)** generates a log entry for an L2 unwrap.
     * It appends the `Tenant_ID` and signs the payload with its local **Node Identity Key**.
 2.  **Collection (The Orbital Agent):**
     * The local **Orbital Agent** buffers these logs to disk (handling network backpressure).

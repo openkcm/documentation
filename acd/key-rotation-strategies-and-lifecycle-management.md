@@ -33,7 +33,7 @@ These keys (Tenant and Service keys) are managed entirely by OpenKCM.
     1.  **Generate:** Create new random key material (`L2_v2`).
     2.  **Promote:** Update the **CMK Registry** to set `L2_v2` as the `Current` key for encryption.
     3.  **Retain:** Mark `L2_v1` as `Deprecated/Decrypt-Only`.
-* **Crypto Core Behavior:** The Regional Core will immediately start using `L2_v2` for any new `Wrap` requests. It retains `L2_v1` in memory (or vault) to service `Unwrap` requests for older data.
+* **Crypto (Krypton) Behavior:** The Regional Core will immediately start using `L2_v2` for any new `Wrap` requests. It retains `L2_v1` in memory (or vault) to service `Unwrap` requests for older data.
 
 ### L4 Rotation (Ephemeral High-Velocity)
 L4 keys are Data Encryption Keys (DEKs).
