@@ -2,66 +2,68 @@
 
 | Status | Date | Document Type |
 | :--- | :--- | :--- |
-| **Active** | 2026-01-13 | Architecture Concept Design |
+| **Active** | 2026-01-31 | Architecture Concept Design |
 
 ## Overview
-The **Identity & Zero-Trust Authorization** component establishes the intelligent security perimeter of the OpenKCM ecosystem. It codifies a **Zero-Trust Architecture (ZTA)** where no entity—service or human—is trusted by default. By integrating **mutual TLS (mTLS)** for cryptographic service identity and the **Cedar Policy Language** for high-performance authorization, OpenKCM ensures that every cryptographic operation is verified and scoped strictly to a tenant's mathematical silo.
+The **Identity & Authorization** component establishes the security perimeter of the OpenKCM ecosystem. To ensure defense-in-depth and separation of concerns, OpenKCM implements a strict **Two-Level Authorization Strategy**.
 
-## The Identity Framework
-OpenKCM utilizes a dual-identity model to manage both autonomous service traffic and human administrative actions.
-
-### Service Identity (mTLS)
-All internal communication (e.g., between the CMK API and regional nodes) requires **Mutual TLS (mTLS)**.
-* **Certificate Gateway:** Traffic is funneled through an Envoy-based Certificate Gateway that requires x509 Client Certificates.
-* **Trusted CA:** Identity is verified against a list of Trusted CA Certificates.
-* **Automatic Enrichment:** The gateway filters and enriches requests with identity metadata before forwarding them to internal services.
-
-### Human & Administrative Identity (OIDC/JWT)
-Administrative access to the CMK Portal is managed via external Identity Providers (IDPs).
-* **Session Gateway:** A dedicated Session/JWT Gateway (Envoy) handles authentication, callbacks, and logout flows.
-* **JWT Validation:** The **Session Manager** interacts with a **Valkey** cache to manage session states and check for token revocation.
-* **IDP Integration:** OpenKCM connects to external IDPs to retrieve OIDC provider details via gRPC and mTLS.
+1.  **Level 1 (The Edge):** Infrastructure & API Access Control enforced by **Envoy ExtAuthZ** using **Cedar Policies**.
+2.  **Level 2 (The Core):** Functional RBAC & Data Sovereignty enforced by the **CMK Service** using internal Group/Role definitions managed via the **Sovereign Portal**.
 
 
 
-## Cedar: The Authorization Engine
-OpenKCM leverages the **Cedar Policy Language** to separate authorization logic from application code, providing the expressiveness needed for complex multi-tenant requirements.
+## Level 1: Edge Authorization (Envoy + Cedar)
+The first line of defense occurs at the network ingress. No request reaches the application logic unless it passes this gate.
 
-### Policy Evaluation
-* **ExtAuthZ Service:** An External Authorization service acts as the bridge between incoming requests and the policy store.
-* **Cedar Policies:** Authorization decisions are evaluated against a central repository of Cedar Policies.
-* **Fine-Grained Context:** The engine enriches requests with gRPC and mTLS context to make real-time "Allow/Deny" decisions.
+### Mechanism
+* **Enforcement Point:** The **Envoy Gateway** acts as the policy enforcement point (PEP).
+* **Decision Engine:** Envoy delegates the decision to an **ExtAuthZ** service, which evaluates **Cedar Policies**.
+* **Scope:** This level determines **"API Access."** It answers: *Is Principal X allowed to call RPC method Y?*
 
-## Enforcement via Envoy & ExtAuthZ
-Authorization is enforced at the network level, ensuring that unauthorized requests never reach the sensitive **CMK API Server** or **Registry Service**.
+### The Policy Check
+When a request arrives (e.g., `POST /RegisterTenant`):
+1.  **Identity Extraction:** Envoy validates the mTLS certificate or OIDC Token.
+2.  **Policy Query:** The ExtAuthZ service queries the Cedar engine:
+    > *"Does User 'alice@corp.com' have 'Action::Call_RegisterTenant' on 'Resource::GlobalRegistry'?"*
+3.  **Outcome:**
+    * **Deny:** Connection is dropped with `403 Forbidden`. The CMK Service never sees the traffic.
+    * **Allow:** Request is forwarded to the backend.
 
-### The Enforcement Loop
-1.  **Request Capture:** The **Envoy Proxy** (acting as a Gateway) intercepts all incoming traffic from consumers and external systems.
-2.  **Identity Extraction:** Envoy extracts the **mTLS certificate** (for services) or **JWT token** (for users).
-3.  **ExtAuthZ Trigger:** Envoy calls the **ExtAuthZ** service via gRPC, passing the identity and request metadata.
-4.  **Policy Query:** The ExtAuthZ service queries the **Cedar Policy** engine to validate the request against defined rules.
-5.  **Decision Delivery:** If authorized, the request is forwarded to the appropriate internal component (e.g., CMK API Server or Tenant Manager); otherwise, it is blocked.
+## Level 2: Application RBAC & Group Management
+Once a request passes the edge, the **CMK Service** performs the second, fine-grained authorization check based on business logic and functional roles.
 
+### Mechanism
+* **Enforcement Point:** The **CMK API Server** (Application Code).
+* **Logic:** Role-Based Access Control (RBAC) rooted in the **Tenant Schema**.
+* **Scope:** This level determines **"Functional capabilities."** It answers: *Does User X belong to a Group that has the rights to perform this specific business workflow?*
 
+### Group Management (via CMK UI)
+Unlike the low-level Cedar policies, Group Management is a human-centric administrative task performed within the **Sovereign Portal (CMK UI)**.
+
+* **Administrator Action:** An Admin logs into the Portal to create Groups (e.g., "Security_Admins", "Audit_Viewers") and assign Users to them.
+* **Storage:** These associations are stored in the **Tenant’s Private Schema**.
+* **Evaluation:** When the API receives a request, it looks up the user's Group assignments in the database to validate they have the specific permission (e.g., `CAN_APPROVE_WORKFLOW`, `CAN_REVOKE_KEY`).
+
+## The Complete Authorization Flow
+
+1.  **Ingress:** User calls `RotateKey()`.
+2.  **Level 1 Check (Envoy/Cedar):**
+    * *Check:* "Is this user allowed to talk to the Key Management API?"
+    * *Result:* **PASS**. (User is a valid employee).
+3.  **Forwarding:** Request reaches CMK Service.
+4.  **Level 2 Check (CMK RBAC):**
+    * *Check:* "Does this user belong to the 'Crypto_Ops' group for 'Tenant_A'?"
+    * *Result:* **PASS**. (User is assigned to the correct group in the UI).
+5.  **Execution:** The key rotation logic proceeds.
 
 ## Security Outcomes
 
-### Mathematical Multi-Tenancy
-The authorization layer serves as the logical gatekeeper for cryptographic silos. Even if a user gains access to the portal, Cedar ensures they can only interact with resources tagged with their specific `tenant_id`.
+### Defense in Depth
+If an attacker bypasses the Envoy gateway (e.g., via a misconfiguration), the **Level 2 RBAC** in the application still prevents unauthorized access. Conversely, if the application has a bug, the **Level 1 Cedar Policy** restricts which APIs can even be reached.
 
-### Separation of Duties (SoD)
-The platform enforces a strict SoD model through component isolation:
-* **Governance Operators:** Manage the Registry and Cedar policies but lack the cryptographic identity to execute regional tasks.
-* **Regional Crypto Nodes:** Have identities permitted to perform encryption/decryption tasks but are restricted from modifying the global CMK Registry.
-
-## Compliance & Auditability
-* **Verifiable Policy Store:** Cedar policies are human-readable, allowing auditors to verify access rules without inspecting low-level source code.
-* **End-to-End Audit:** Every authorization decision is traceable from the initial Envoy gateway through the ExtAuthZ service to the final database record.
-* **Centralized Logging:** All administrative and service actions are captured in the **PostgreSQL** database for long-term audit retention.
+### Separation of Configuration
+* **Platform Engineers** manage **Level 1 (Cedar)** to secure the infrastructure APIs.
+* **Tenant Administrators** manage **Level 2 (Groups)** via the UI to secure their own business operations.
 
 ## Summary
-This document establishes the **Intelligent Perimeter** of OpenKCM. By combining mTLS for service identity and Cedar for granular policy, the platform ensures that:
-
-* **Identity is Cryptographic:** No request is anonymous; every service is verified via x509 certificates.
-* **Access is Scoped:** The **ExtAuthZ** service ensures that actions are strictly limited by policy.
-* **Trust is Never Assumed:** The gateway architecture ensures that every entry point is explicitly secured by Envoy.
+ACD-104 defines a robust authorization pipeline. **Level 1 (Envoy/Cedar)** acts as the rigorous "Bouncer" at the door, ensuring only valid principals enter the building. **Level 2 (CMK RBAC)** acts as the "Internal ID Badge," ensuring users can only access the specific rooms and workflows (Groups) defined by their administrators in the **Sovereign Portal**.

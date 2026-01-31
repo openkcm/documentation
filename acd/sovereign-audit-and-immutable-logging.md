@@ -2,62 +2,57 @@
 
 | Status | Date | Document Type |
 | :--- | :--- | :--- |
-| **Active** | 2026-01-16 | Architecture Concept Design |
+| **Active** | 2026-01-31 | Architecture Concept Design |
 
 ## Overview
-**Sovereign Audit** is the mechanism by which OpenKCM proves its trustworthiness. In a cryptographic system where the provider claims "we cannot see your data," the only verification is an immutable, verifiable audit trail that links every operation back to an authorized identity.
+**Sovereign Audit** is the mechanism by which OpenKCM converts "Security Operations" into "Business Trust." In a Sovereign Cloud environment, it is not enough for a provider to claim they cannot access customer data; they must prove it.
 
-This document defines the **Unified Audit Pipeline**, a system designed to capture, sign, and deliver high-fidelity security logs. It serves two masters:
-1.  **The Platform Provider:** Who needs operational visibility and forensic capabilities.
-2.  **The Sovereign Customer:** Who demands "Cryptographic Proof of Access" to verify that their L1 keys are only being used as contractually agreed.
+This document defines the **Unified Audit Pipeline**, a strategic capability designed to capture, seal, and deliver immutable proof of every system interaction. It serves two critical business functions:
+1.  **Operational Transparency:** Providing the platform provider with the visibility needed to maintain service health.
+2.  **Sovereign Verification:** Giving the customer the "Cryptographic Proof" required to satisfy regulators (GDPR, TISAX) that their data isolation contract is being honored.
+
+
 
 ## The "Glass House" Philosophy
-OpenKCM operates on a principle of radical transparency.
-* **Every Event is Logged:** From a high-level API call in the Portal to a low-level KMIP unwrap operation in the Crypto (Krypton).
-* **Every Log is Signed:** Logs are hashed and signed at the source (Regional Node) to prevent tampering during transit.
-* **Every Access is Traceable:** A global `Correlation_ID` links the SaaS user's click to the specific millisecond the L1 Root Key was accessed in AWS KMS.
+OpenKCM operates on a principle of radical transparency to eliminate the "Trust Gap" inherent in SaaS platforms.
 
-## The Audit Event Schema
-To ensure interoperability with SIEMs (Splunk, Datadog, Sentinel), OpenKCM standardizes on a strict JSON schema.
+* **Total Capture:** Every significant business event—from onboarding a new tenant to rotating a cryptographic key—is recorded.
+* **Tamper-Evidence:** Logs are digitally signed at the source. Any attempt to alter a log entry to cover tracks invalidates the signature, providing immediate forensic evidence of tampering.
+* **Global Traceability:** Every action is tagged with a unique "Correlation ID," allowing a customer to trace a specific user click in the Portal all the way down to the specific millisecond a key was accessed in the vault.
 
-| Field | Description | Example |
+## The Business Data Model (The Audit Schema)
+To ensure that audit logs are useful for compliance and forensics, OpenKCM standardizes the "Who, What, Where, and When" of every event. This structured approach allows logs to be instantly ingested by enterprise tools without complex translation.
+
+| Business Context | Description | Value to Customer |
 | :--- | :--- | :--- |
-| `timestamp` | UTC Execution Time (Microsecond precision) | `2026-01-16T14:05:01.123456Z` |
-| `correlation_id` | Global Trace ID | `req-abc-123-xyz` |
-| `actor` | The Identity (User or Service) | `user:admin@tenant-a.com` or `spiffe://core/region-eu-1` |
-| `action` | The Operation Performed | `kms:Decrypt`, `policy:Update` |
-| `resource` | The Target Object | `key:L2-Tenant-A-v4` |
-| `status` | Outcome (Success/Failure/Deny) | `ALLOW` |
-| `signature` | Cryptographic seal of the log entry | `sha256:8f43...` |
+| **The Actor** | The User or Service Identity. | Answers "Who performed this action?" (e.g., `admin@tenant-a`). |
+| **The Action** | The specific operation. | Answers "What happened?" (e.g., `Key Rotation`, `User Login`, `Workflow Approval`). |
+| **The Resource** | The target object. | Answers "What was affected?" (e.g., `Production-Database-Key`). |
+| **The Context** | The Tenant ID and Trace ID. | Ensures the log is routed strictly to the correct customer's sovereign silo. |
+| **The Outcome** | Success or Failure (with Reason). | Provides forensic details on *why* an access attempt was denied (e.g., `MFA Failed`). |
 
+## The Pipeline Strategy: Vendor Neutrality (OTEL)
+OpenKCM builds its audit pipeline on the **OpenTelemetry (OTEL)** industry standard. This is a strategic decision to avoid "Vendor Lock-In."
 
+Instead of forcing customers to use a proprietary logging tool, the platform supports a **"Bring Your Own Observability"** model:
+1.  **Universal Compatibility:** Because the platform speaks the global standard language of observability, it can connect to *any* enterprise SIEM (Splunk, Datadog, Sentinel, Dynatrace) out of the box.
+2.  **Flexible Routing:** The system can simultaneously send operational metrics to the provider (for health checks) while routing sensitive security logs exclusively to the customer's private storage.
 
-## The Pipeline Architecture
-The audit system is built on an asynchronous, reliable delivery model.
+## Sovereign Routing & Storage
+The architecture respects the physical boundaries of the customer's data.
 
-1.  **Generation (The Source):**
-    * The **Crypto (Krypton)** generates a log entry for an L2 unwrap.
-    * It appends the `Tenant_ID` and signs the payload with its local **Node Identity Key**.
-2.  **Collection (The Orbital Agent):**
-    * The local **Orbital Agent** buffers these logs to disk (handling network backpressure).
-    * It batches and pushes them to the central **Governance Ingest**.
-3.  **Validation & Routing (The Hub):**
-    * The central ingestion service verifies the signature.
-    * It routes the log to two destinations:
-        * **Hot Storage:** OpenSearch / Postgres for immediate platform ops visibility.
-        * **Cold Storage:** Immutable S3 Buckets (WORM compliant) for long-term retention.
-4.  **Customer Export (The Sovereign Link):**
-    * A dedicated "Log Streamer" filters events by `Tenant_ID`.
-    * It pushes these filtered, signed logs directly to the customer’s own SIEM or S3 bucket (Bring Your Own Bucket).
+* **Platform Operations:** The provider receives only anonymized health data required to keep the lights on.
+* **Sovereign Storage:** Sensitive audit logs containing user identities and key usage patterns are routed directly to the **Tenant's Private Storage** (Sovereign Bucket or Private Schema).
+* **Compliance Archiving:** The system supports "Write Once, Read Many" (WORM) storage, ensuring that audit trails satisfy legal retention requirements (e.g., 7 years for banking logs).
 
+## Sovereign Verification (The "Trust but Verify" Model)
+This architecture allows customers to independently audit the platform provider.
 
+Because every key operation in OpenKCM eventually triggers a call to the customer's own cloud infrastructure (e.g., AWS KMS or Azure Key Vault), the customer can perform a **"Double-Entry Bookkeeping"** check:
+* **The OpenKCM Log says:** "We accessed your key at 12:00:01."
+* **The Cloud Provider Log says:** "OpenKCM accessed your key at 12:00:01."
 
-## Sovereign Verification
-Customers do not have to trust OpenKCM's logs blindly. Because every L2 unwrap requires a call to *their* external KMS (AWS/Azure), they can correlate:
-* **OpenKCM Log:** "We accessed L1 key `arn:aws:kms...` at 14:05:01."
-* **AWS CloudTrail:** "Principal `OpenKCM_Role` accessed key `arn:aws:kms...` at 14:05:01."
-
-If these timestamps and correlation IDs match, the customer has **Cryptographic Proof** that the platform is operating correctly. If they diverge, the customer has evidence of tampering or unauthorized access.
+If these records match, the customer has mathematical proof that the system is behaving correctly. If they diverge, the customer has immediate proof of unauthorized activity.
 
 ## Summary
-ACD-105 transforms logging from a debugging tool into a **Trust Product**. By providing signed, tamper-evident, and customer-exportable audit trails, OpenKCM allows enterprises to "Trust but Verify" the security of their sovereign data.
+ACD-105 transforms logging from a technical overhead into a **Strategic Trust Product**. By delivering signed, standardized, and customer-owned audit trails, OpenKCM allows enterprises to move sensitive workloads to the cloud with the confidence that they retain absolute oversight over every access event.

@@ -2,47 +2,68 @@
 
 | Status | Date | Document Type |
 | :--- | :--- | :--- |
-| **Active** | 2026-01-13 | Architecture Concept Design |
+| **Active** | 2026-01-31 | Architecture Concept Design |
 
 ## Overview
-The **OpenKCM Crypto (Krypton)** is the regional "Authority" and cryptographic backbone of the OpenKCM ecosystem. While the central CMK Service manages global governance and tenant metadata, the OpenKCM Crypto (Krypton) is responsible for the localized execution of those policies and the lifecycle of the regional key hierarchy.
+**OpenKCM Crypto (Krypton)** is the regional "Execution Authority" and cryptographic backbone of the ecosystem. While the central CMK Service manages global governance, Krypton is the only component responsible for the **physical custody and execution** of encryption operations.
 
-Its primary mission is twofold:
-1. **Recursive Unsealing**: Using a customer’s external **L1 Root Key** to unlock the regional **L2 (Tenant)** and **L3 (Key Encryption Key - KEK)** layers.
-2. **KMIP Execution**: Serving as the regional KMIP engine that performs cryptographic operations for customer **L4 Data Encryption Keys (DEKs)**, specifically wrapping and unwrapping them against the **L3 KEK**.
+Its primary mission is to maintain the **Sovereign Chain of Trust** by recursively unsealing keys from the customer's Hardware Root (L1) down to the Data Encryption Key (L4). It serves as the "Sovereign Vault" that holds the intermediate keys (L2/L3) in secure memory, ensuring they are never exposed to the network or the ephemeral Gateways.
 
 ## The Regional Component Stack
-The OpenKCM Crypto (Krypton) is a high-integrity cluster of components designed for resilience and security:
+Krypton is a high-integrity cluster designed for **Zero-Trust Execution** and **Vendor Neutrality**:
 
-* **OpenKCM Crypto (Core Service):** The Go-based orchestration engine that performs **KMIP operations** regarding customer **L4 (DEK)** material, handling the Wrap and Unwrap logic against the **L3 (KEK)**.
-* **Internal Vault (OpenBao):** The regional secure storage for L2 and L3 intermediate keys. It is protected by the internal MasterKey and accessible only via internal mTLS.
-* **Checker:** A specialized sidecar service that provides health introspection, OPA-based policy verification, and cluster status reporting.
+* **Krypton Core (The Orchestrator):** The Go-based engine that receives lifecycle commands from **Orbital** and exposes the KMIP interface for cryptographic operations. It is the authoritative "Brain" of the region.
+* **Pluggable Internal Vault:** A strictly defined **Storage Plugin Interface** that abstracts the physical persistence of secrets. The platform creates no vendor lock-in; customers or platform engineers can select the storage backend that fits their compliance needs. The core orchestrates the encryption logic, while the selected plugin handles the secure storage of the encrypted **L2/L3 Blobs**.
 
+## The Cryptographic Hierarchy (L1 → L4)
+Krypton enforces a strict hierarchy where every layer protects the one below it.
 
+| Layer | Name | Location | Role |
+| :--- | :--- | :--- | :--- |
+| **L1** | **Hardware Root** | **Customer HSM/KMS** | The physical anchor (e.g., AWS KMS ARN). Krypton never sees this private key; it only calls the API to `Decrypt` the L2 blob. |
+| **L2** | **Tenant Root** | **Krypton Secure Memory** | The "Sovereign Link." Unsealed via L1 and held in RAM to verify tenant activity. |
+| **L3** | **Key Encryption Key (KEK)** | **Krypton Secure Memory** | Intermediate keys used to wrap/unwrap L4 keys. **These never leave the Core.** |
+| **L4** | **Data Encryption Key (DEK)** | **Application / Gateway** | The ephemeral keys encrypting actual data. Managed by the Gateway but wrapped by the Core. |
 
-## Communication Protocol: KMIP & mTLS
-The **OpenKCM Crypto (Krypton)** utilizes the KMIP protocol as its primary operational interface for both internal orchestration and high-performance data plane requests.
+## Communication Protocols
 
-* **KMIP Protocol**: The Core exposes the **OASIS KMIP** standard. This enables a standardized approach for clients (or the Crypto (Krypton) Gateway) to request that L4 DEKs be wrapped or unwrapped by the regional L3 KEK.
-* **Identity-Based mTLS**: Every KMIP request is gated by **mutual TLS (mTLS)**. This ensures that only authorized workloads can request the Core to perform operations using a specific tenant's L3 key.
+### Northbound: Orbital Integration
+* **Protocol:** **RabbitMQ (MQTP)** or **gRPC** for asynchronous lifecycle tasks (Link/Unlink).
+* **Function:** Synchronizing the "Desired State" (Global Registry) with the "Actual State" (Regional Vault).
 
-## The Wrapping & Unwrapping Workflow (L1 → L4)
-The Core manages the cryptographic chain of custody from the cloud-native root to the individual data record:
+### Southbound: KMIP & Gateway Delegation
+* **Protocol:** **OASIS KMIP** over mTLS.
+* **Function:** Serving as the authoritative engine for L4 wrapping operations.
+* **Delegation:** The **Krypton Gateway** (ACD-203) delegates all *Unwrap* operations to the Core. The Core validates the request, performs the transform using the cached L3 key, and returns the result.
 
-1.  **L1 Handshake**: **OpenKCM Crypto** calls the customer's external KMS to unwrap the **L2 Tenant Key**.
-2.  **L3 Activation**: The L2 key is used to unwrap/unlock the **L3 KEK (Key Encryption Key)** stored within the Internal Vault.
-3.  **L4 KMIP Operation**: When an application requires data access, it sends the wrapped **L4 DEK** to the Core via KMIP. The Core unwraps the L4 DEK using the **L3 KEK** and returns the material (or performs the transform) according to the policy.
+## The Sovereign Workflow
 
+### 1. The "Sovereign Link" (Activation)
+This process turns a static database record into a live encryption service.
+1.  **Command:** Orbital sends a `LINK_KEY` task with the L1 Reference.
+2.  **Handshake:** Krypton authenticates to the Customer's External KMS (AWS/Azure) and requests decryption of the L2 Blob.
+3.  **Activation:** The decrypted **L2 Key** is loaded into **Secure Memory**. The tenant is now "Active."
 
+### 2. The Execution Loop (KMIP Unsealing)
+1.  **Request:** A Gateway sends a **Ciphertext L4 DEK** to the Core.
+2.  **Validation:** The Core checks if the Tenant's L2 Key is loaded (Active).
+3.  **Execution:** The Core uses the **L3 KEK** (derived from L2) to unwrap the L4 DEK.
+4.  **Response:** The **Plaintext L4 DEK** is returned to the Gateway.
+
+### 3. The "Kill-Switch" (Revocation)
+1.  **Command:** Orbital broadcasts an `UNLINK_KEY` task (Lane 0 Priority).
+2.  **Action:** Krypton **zeroizes the memory regions** holding the L2 and L3 keys.
+3.  **Outcome:** The "Chain of Trust" is broken instantly. All subsequent KMIP requests fail because the Core no longer possesses the keys required to unwrap L4 data.
 
 ## Regional Autonomy & Persistence
-To ensure zero-downtime operations, the OpenKCM Crypto (Krypton) is designed to operate independently of the central CMK Control Plane:
+To ensure resilience, Krypton operates with **Cached Autonomy**.
 
-* **Regional Persistence**: The Core relies on its internal **Vault (OpenBao)** to maintain the state of the regional key hierarchy. It can restart and re-establish the L1-L3 chain using the customer's external key without contacting the central Registry.
-* **Task Reconciliation**: It synchronizes with the **Orbital** framework to receive global policy updates or rotation commands, ensuring the "Actual State" of regional KMIP operations matches the "Desired State" in the CMK.
+* **Regional Persistence:** The Core uses the configured **Storage Plugin** to persist the *encrypted* state of the key hierarchy. If the entire cluster restarts, it retrieves the blobs via the plugin and contacts the Customer's External L1 KMS to re-establish trust.
+* **Fail-Safe:** While it can continue serving existing keys during a control plane outage, it enforces a **"Fail-Closed"** posture for revocation. If the L1 link is severed (e.g., customer disables AWS KMS key), Krypton eventually fails to re-wrap its internal vault, naturally terminating access.
 
 ## Summary
-This document defines the regional "Root of Authority" for OpenKCM. By serving as the KMIP engine for **L4 DEK** operations against the **L3 KEK**, the **OpenKCM Crypto (Krypton)** ensures that:
-1.  **Sovereignty is Maintained**: The L1-L4 chain remains intact and mathematically isolated.
-2.  **Performance is Standardized**: KMIP provides a high-throughput, industry-standard interface for data operations.
-3.  **Governance is Localized**: Regional nodes handle the heavy lifting of cryptographic transforms while remaining under global administrative control.
+**ACD-202** defines the regional "Root of Authority" for OpenKCM. By serving as the **KMIP Engine** that protects the **L3 KEK**, the **OpenKCM Crypto (Krypton)** ensures that:
+
+1.  **Sovereignty is Maintained:** The L1-to-L4 chain is mathematically isolated and can be severed instantly.
+2.  **Storage is Flexible:** The architecture supports **Plug-and-Play Backends**, allowing implementations to be selected via the **Internal Vault Plugin** based on deployment needs.
+3.  **Governance is Enforced:** No data key can be unwrapped without passing through the policy checks of the Core.
