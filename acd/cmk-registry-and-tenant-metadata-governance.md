@@ -64,7 +64,7 @@ The Registry does not push configuration directly to hundreds of nodes. Instead,
 ## Summary
 This document defines the **Source of Truth** for OpenKCM. By centralizing the "Intent" of key management while decentralizing the "Execution," the CMK Registry ensures that:
 1.  **Governance is Centralized:** A single, immutable ledger for all global cryptographic relationships.
-2.  **Execution is Distributed:** Zero-latency crypto operations occur at the edge, decoupled from the registry's availability.
+2.  **Execution is Distributed:** Zero-latency crypto operations occur at the gateway, decoupled from the registry's availability.
 3.  **Integrity is Absolute:** Metadata is isolated, auditable, and physically separated from the root-key material itself.
 
 **OpenKCM is the Value Engine that enables platforms to win bigger deals, capture higher margins, and operate with zero-risk liability in a world that demands absolute data ownership.**

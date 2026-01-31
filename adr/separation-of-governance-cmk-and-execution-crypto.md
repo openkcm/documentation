@@ -14,7 +14,7 @@ OpenKCM functions as a "Value Engine" for sovereign SaaS, which introduces the *
 A monolithic architecture where the same service handles "Governance" (L1 Management) and "Execution" (L4 Encryption) creates unacceptable risks:
 * **Privacy Violation:** If the Governance layer handles encryption, it effectively possesses the keys, negating the promise that "The Provider cannot see my data."
 * **Blast Radius:** A DDoS attack on the public API (Governance) could paralyze the internal encryption engine (Execution).
-* **Latency Physics:** A central Governance authority cannot physically service cryptographic requests from edge locations (e.g., Sydney to N. Virginia) fast enough for real-time applications.
+* **Latency Physics:** A central Governance authority cannot physically service cryptographic requests from gateway locations (e.g., Sydney to N. Virginia) fast enough for real-time applications.
 * **Residency Laws:** Data residency laws (GDPR, Schrems II) often mandate that key material *never* leaves a specific jurisdiction, while Governance metadata must be globally viewable.
 
 ## Decision
@@ -55,7 +55,7 @@ To enforce this separation, we introduce **Orbital**, an asynchronous reconcilia
 ### Positive (Pros)
 * **Liability Shift:** Because the CMK (Governance) never touches key material, the platform provider minimizes liability. We manage the *map*, not the *treasure*.
 * **Residency Compliance:** We can deploy a Crypto Node in `eu-frankfurt` that *only* holds keys for German tenants. Even if the global CMK is in the US, the keys never leave Germany.
-* **Performance:** Encryption happens at the Edge (Crypto Node), millimeters away from the workload, while Governance happens centrally.
+* **Performance:** Encryption happens at the Gateway (Crypto Node), millimeters away from the workload, while Governance happens centrally.
 * **Resilience:** A failure in the Governance Portal does not stop the SaaS platform from encrypting/decrypting data (using cached keys).
 
 ### Negative (Cons) & Mitigations

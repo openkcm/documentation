@@ -8,7 +8,7 @@
 The **OpenKCM Crypto Core** is the "Execution Engine" of the platform. While the Governance Plane (CMK) defines *who* can access keys, the Core is responsible for the actual cryptographic heavy lifting:
 * Recursively unsealing the key hierarchy (L1 -> IVK(L2) -> L2 -> L3).
 * Managing the lifecycle of **Key Encryption Keys (KEKs)** (L2 and L3).
-* Serving high-speed KMIP operations to the Crypto Edge.
+* Serving high-speed KMIP operations to the Crypto Gateway.
 
 **The Problem:** Without a central orchestration logic, the Core becomes a simple "dumb keystore." We need an intelligent supervisor that ensures keys are rotated on schedule, cached effectively for performance, and purged instantly upon revocation.
 

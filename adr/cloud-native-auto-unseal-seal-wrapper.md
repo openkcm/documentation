@@ -40,7 +40,7 @@ To ensure cloud-agnosticism, the Auto-Unseal interface must support pluggable "S
 * **Azure Key Vault:** Uses Key Vault unwrapping.
 * **GCP Cloud KMS:** Uses Cloud KMS asymmetric decryption.
 * **HashiCorp Vault (Transit):** Allows an on-premise OpenKCM cluster to auto-unseal by calling a *central* upstream Vault service (acting as the KMS).
-* **TPM (Trusted Platform Module):** For bare-metal edge devices, allows unsealing only if the hardware signature matches (Secure Boot).
+* **TPM (Trusted Platform Module):** For bare-metal gateway devices, allows unsealing only if the hardware signature matches (Secure Boot).
 
 ### Security Posture
 In this model, the "Root of Trust" is effectively **Identity Access Management (IAM)**.

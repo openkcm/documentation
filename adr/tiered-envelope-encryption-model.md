@@ -25,7 +25,7 @@ We will implement a **Four-Level Hierarchical Keychain (L1–L4)** using **Envel
 | **L1** | **Root Anchor** | Global / Tenant | **Customer** (External KMS) | **External Only** | The "Kill Switch." Revoking this mathematically locks the entire chain. |
 | **L2** | **Tenant Key** | Tenant | **OpenKCM** (Platform) | **Encrypted (Red)** | The mathematical boundary of a tenant. Isolates Tenant A from Tenant B. |
 | **L3** | **Service Key** | Service / Domain | **OpenKCM** (Platform) | **Encrypted (Red)** | Isolates "Billing" data from "Health" data within the same tenant. |
-| **L4** | **Data Key (DEK)** | Record / Object | **OpenKCM** (Edge) | **Ephemeral / Wrapped** | The high-velocity key used to encrypt the actual database rows or files. |
+| **L4** | **Data Key (DEK)** | Record / Object | **OpenKCM** (Gateway) | **Ephemeral / Wrapped** | The high-velocity key used to encrypt the actual database rows or files. |
 
 
 
@@ -39,7 +39,7 @@ To explicitly define security boundaries, we classify key states into two catego
 * **🟩 Green Keys (Plaintext):**
     * **Definition:** Raw, usable cryptographic key material.
     * **Storage:** **STRICTLY FORBIDDEN** on disk.
-    * **Memory:** Only exists in `mlock` (locked RAM) within the **Crypto Core** or **Crypto Edge** process memory.
+    * **Memory:** Only exists in `mlock` (locked RAM) within the **Crypto Core** or **Crypto Gateway** process memory.
     * **Lifecycle:** Generated on-the-fly or unwrapped just-in-time, then zeroed out immediately after use (or cached briefly in secure memory).
 
 ### The IVK (Internal Versioned Key) Logic
@@ -64,15 +64,15 @@ The **OpenKCM Crypto Core** requires a "Key of Keys" to protect the IVKs and int
     * *Use Case:* Air-gapped environments or ultra-high security zones where no single cloud provider is trusted.
 
 ## Key Workflow (The "Chain of Custody")
-1.  **L4 Creation:** App requests encryption. **Crypto Edge** generates a random L4 DEK (Green).
-2.  **L4 Use:** Edge encrypts data with L4 DEK.
-3.  **L4 Wrapping:** Edge requests **Crypto Core** to wrap L4.
+1.  **L4 Creation:** App requests encryption. **Crypto Gateway** generates a random L4 DEK (Green).
+2.  **L4 Use:** Gateway encrypts data with L4 DEK.
+3.  **L4 Wrapping:** Gateway requests **Crypto Core** to wrap L4.
 4.  **Recursive Unseal:**
     * Core checks memory for L3 (Green). If missing:
     * Checks memory for L2 (Green). If missing:
     * Calls **External L1** (AWS KMS) to unwrap L2 (Red $\to$ Green).
     * Unwraps L3 using L2 (Red $\to$ Green).
-5.  **Completion:** Core wraps L4 using L3. Returns `L4_Wrapped_Blob` (Red) to the Edge.
+5.  **Completion:** Core wraps L4 using L3. Returns `L4_Wrapped_Blob` (Red) to the Gateway.
 
 ## Consequences
 

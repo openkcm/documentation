@@ -20,7 +20,7 @@ OpenKCM employs a recursive envelope encryption model where each layer cryptogra
 | **L2** | Tenant | **Tenant Encryption Key**: Provides mathematical siloing and isolation between unique customers. | Internal Secure Vault / OpenBao |
 | **L2.1** | Tenant Version | **Versioned Tenant Keys**: Facilitates seamless key rotation, rollback, and per-resource versioning. | Internal Registry (Encrypted) |
 | **L3** | Service | **Service Key**: Isolates specific application domains (e.g., "Payments", "PII-Vault", "Logs"). | Internal Secure Storage |
-| **L4** | Workload | **Data Encryption Key (DEK)**: Ephemeral, short-lived keys used for per-record encryption/decryption. | Crypto Edge Memory (KMIP) |
+| **L4** | Workload | **Data Encryption Key (DEK)**: Ephemeral, short-lived keys used for per-record encryption/decryption. | Crypto Gateway Memory (KMIP) |
 
 
 
@@ -64,7 +64,7 @@ OpenKCM abstracts complex provider APIs into a unified interface, supporting thr
 This document establishes the **Sovereignty Firewall** of the OpenKCM platform. By enforcing a strict hierarchical model and supporting robust unsealing strategies, the platform ensures that:
 
 1.  **Sovereignty is Absolute**: The customer’s L1 key remains the ultimate "Kill Switch."
-2.  **Performance is Uncompromised**: The hierarchy allows for edge-native L4 operations with sub-millisecond latency.
+2.  **Performance is Uncompromised**: The hierarchy allows for gateway-native L4 operations with sub-millisecond latency.
 3.  **Liability is Minimized**: The provider shifts the risk of root-key compromise back to the hardware-backed customer account.
 
 OpenKCM turns the **Root of Trust** into a **Strategic Value Engine**, allowing SaaS providers to win the most regulated enterprise deals by offering mathematical proof of data ownership.

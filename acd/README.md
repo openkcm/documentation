@@ -14,13 +14,13 @@ This index defines the high-level conceptual frameworks and strategic paradigms 
 * [**ACD-105: Sovereign Audit & Immutable Logging**](sovereign-audit-and-immutable-logging.md)
   * **Concept**: The architecture for high-volume, tamper-proof logging. Defines how the platform generates signed "Proofs of Access" for every cryptographic operation and separates the Log Plane from the Control Plane to satisfy strict compliance (SOC2, WORM).
 
-### II. The Execution Plane (Regional & Edge)
+### II. The Execution Plane (Regional & Gateway)
 * [**ACD-201: Orbital – State Synchronization & Task Reconciliation**](orbital–state-synchronization-and-task-reconciliation.md)
   * **Concept**: The distributed nervous system bridging the CMK (Intent) and Crypto (Action). It utilizes an asynchronous event bus to broadcast priority revocation events and reconcile configuration drift across the global mesh.
 * [**ACD-202: OpenKCM Crypto Core – Regional Governance & KMIP Unsealing**](crypto-core-regional-governance-and-unsealing.md)
   * **Concept**: The regional authority responsible for the "Recursive Unsealing" of the L1 $\rightarrow$ L2 $\rightarrow$ L3 chain. It acts as the stateless execution engine for L4 Wrap/Unwrap operations without persisting data keys.
-* [**ACD-203: OpenKCM Crypto Edge – High-Performance Ephemeral Data Plane**](crypto-edge–high-performance-ephemeral-data-plane.md)
-  * **Concept**: The forward-deployed interface located at the workload edge. It manages ephemeral L4 Data Encryption Keys (DEKs) to deliver sub-millisecond cryptographic performance while maintaining strict isolation.
+* [**ACD-203: OpenKCM Crypto Gateway – High-Performance Ephemeral Data Plane**](crypto-gateway–high-performance-ephemeral-data-plane.md)
+  * **Concept**: The forward-deployed interface located at the workload gateway. It manages ephemeral L4 Data Encryption Keys (DEKs) to deliver sub-millisecond cryptographic performance while maintaining strict isolation.
 
 ### III. Cryptographic Mechanics & Standards
 * [**ACD-301: The Layered Key Hierarchy (L1 → L4)**](layered-key-hierarchy-(L1→L4).md)

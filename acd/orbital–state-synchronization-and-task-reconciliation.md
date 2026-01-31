@@ -13,7 +13,7 @@
 Based on the latest mesh design, Orbital operates across two primary synchronization tiers to ensure global reach and regional autonomy:
 
 * **Global-to-Regional Sync:** The **CMK Global/Mesh Registry** synchronizes high-level tenant and policy data with regional nodes via **mTLS** and **TLS + IAS JWT**.
-* **Regional-to-Node Sync:** Each regional node orchestrates tasks for its local **OpenKCM Crypto Core** and manages the policy distribution to distributed **OpenKCM Crypto Edge** components.
+* **Regional-to-Node Sync:** Each regional node orchestrates tasks for its local **OpenKCM Crypto Core** and manages the policy distribution to distributed **OpenKCM Crypto Gateway** components.
 
 ## The Reconciliation Philosophy: Desired vs. Actual State
 Orbital manages the lifecycle of system state through a continuous "Desired vs. Actual" reconciliation loop.

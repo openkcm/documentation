@@ -12,7 +12,7 @@ This document details the **Sovereign Reconciliation Strategy**, ensuring that r
 ## The Resilience Philosophy: "Local Trust, Global Command"
 OpenKCM is designed as a **Loose Federation of Autonomous Regions**.
 * **The Brain (CMK Registry):** Lives in a primary region (e.g., `us-east-1`). It holds the "Desired State."
-* **The Limbs (Crypto Cores):** Live in edge regions (e.g., `eu-central-1`, `ap-northeast-1`). They hold the "Actual State."
+* **The Limbs (Crypto Cores):** Live in gateway regions (e.g., `eu-central-1`, `ap-northeast-1`). They hold the "Actual State."
 
 If the connection between the Brain and the Limbs is severed, the Limbs **continue to function** for existing authorized workloads but **fail safe** for lifecycle changes.
 

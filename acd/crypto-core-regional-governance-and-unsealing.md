@@ -23,7 +23,7 @@ The OpenKCM Crypto Core is a high-integrity cluster of components designed for r
 ## Communication Protocol: KMIP & mTLS
 The **OpenKCM Crypto Core** utilizes the KMIP protocol as its primary operational interface for both internal orchestration and high-performance data plane requests.
 
-* **KMIP Protocol**: The Core exposes the **OASIS KMIP** standard. This enables a standardized approach for clients (or the Crypto Edge) to request that L4 DEKs be wrapped or unwrapped by the regional L3 KEK.
+* **KMIP Protocol**: The Core exposes the **OASIS KMIP** standard. This enables a standardized approach for clients (or the Crypto Gateway) to request that L4 DEKs be wrapped or unwrapped by the regional L3 KEK.
 * **Identity-Based mTLS**: Every KMIP request is gated by **mutual TLS (mTLS)**. This ensures that only authorized workloads can request the Core to perform operations using a specific tenant's L3 key.
 
 ## The Wrapping & Unwrapping Workflow (L1 → L4)

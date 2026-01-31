@@ -65,15 +65,15 @@
 * **ADR-504: BYOK and HYOK Onboarding Workflows**
     * *Context:* Procedures for integrating customer-provided keys into the L1 layer.
 
-### VI: Crypto (Core & Edge Dual-Service Model)
+### VI: Crypto (Core & Gateway Dual-Service Model)
 * [**ADR-601: Crypto Core Central Orchestration and KEK Lifecycle**](crypto-core-central-orchestration-and-kek-lifecycle.md)
   * *Context:* Defines the Core service role in orchestrating L2 (Tenant) and L3 (Service) key lifecycles, and managing MasterKey unsealing via **Seal modes**.
-* [**ADR-602: Crypto Edge Workload Orchestration and DEK Lifecycle**](crypto-edge-workload-orchestration-and-dek-lifecycle.md)
-  * *Context:* Defines the Edge service role in orchestrating L4 (DEK) keys directly at the application workload level.
-* [**ADR-603: KMIP Functional Split between Core and Edge**](kmip-functional-split-between-core-and-edge.md)
-  * *Context:* Establishes that **Crypto Core** handles L3 (KEK) operations (excluding Create/Get), while **Crypto Edge** provides high-performance L4 operations (Create, Get, Encrypt, Decrypt).
+* [**ADR-602: Crypto Gateway Workload Orchestration and DEK Lifecycle**](crypto-gateway-workload-orchestration-and-dek-lifecycle.md)
+  * *Context:* Defines the Gateway service role in orchestrating L4 (DEK) keys directly at the application workload level.
+* [**ADR-603: KMIP Functional Split between Core and Gateway**](kmip-functional-split-between-core-and-gateway.md)
+  * *Context:* Establishes that **Crypto Core** handles L3 (KEK) operations (excluding Create/Get), while **Crypto Gateway** provides high-performance L4 operations (Create, Get, Encrypt, Decrypt).
 * [**ADR-604: Sub Millisecond Latency KPIs and Measurement**](sub-millisecond-latency-kpis-and-measurement.md)
-  * *Context:* Establishing performance baselines to ensure the Edge-level cryptographic operations do not impact application throughput.
+  * *Context:* Establishing performance baselines to ensure the Gateway-level cryptographic operations do not impact application throughput.
 
 ### VII: Protocols & Communication
 * **ADR-701: KMIP Protocol Adoption and Extensions**

@@ -5,7 +5,7 @@
 | **Active** | 2026-01-17 | Architecture Design Record |
 
 ## Context
-The **OpenKCM Crypto Edge** is marketed as a "Zero-Latency" component. If encryption adds noticeable delay to the application's critical path, developers will bypass it, compromising security.
+The **OpenKCM Crypto Gateway** is marketed as a "Zero-Latency" component. If encryption adds noticeable delay to the application's critical path, developers will bypass it, compromising security.
 * **The Promise:** Encryption should be "effectively free" (< 1ms).
 * **The Reality:** Without strict KPIs and granular observability, latency creeps in due to Garbage Collection (GC), network jitter, or lock contention.
 
@@ -20,11 +20,11 @@ We define the **"Golden Signal"** for Cryptography as the **P99 Latency of L4 Op
 | **P50 (Median)** | **< 0.2ms** | > 0.5ms | Most ops are just AES-NI instructions in local memory. |
 | **P99 (Tail)** | **< 1.0ms** | > 5.0ms | Accounts for occasional GC pauses or L3 cache misses. |
 | **P99.9 (Deep Tail)** | **< 10ms** | > 50ms | Accounts for the rare "Cold Start" where L3 must be fetched from Core. |
-| **Availability** | **99.99%** | < 99.9% | Edge must survive Core outages. |
+| **Availability** | **99.99%** | < 99.9% | Gateway must survive Core outages. |
 
 ### Measurement Strategy
 We will implement **Client-Side Histogram Metrics** in the OpenKCM SDK and Sidecar.
-* **Why Client-Side?** Measuring at the server (Edge) misses the network hop from App-to-Sidecar. The Application SDK's view is the only one that matters to the user.
+* **Why Client-Side?** Measuring at the server (Gateway) misses the network hop from App-to-Sidecar. The Application SDK's view is the only one that matters to the user.
 * **Buckets:** Exponential buckets optimized for low latency: `[0.1ms, 0.25ms, 0.5ms, 1ms, 2.5ms, 5ms, 10ms, Inf]`.
 
 ### Alerting Logic
@@ -43,4 +43,4 @@ We will implement **Client-Side Histogram Metrics** in the OpenKCM SDK and Sidec
 
 ## References
 * [Google SRE Book: Golden Signals](https://sre.google/sre-book/monitoring-distributed-systems/)
-* [ACD-203: Crypto Edge Performance](../acd/crypto-edge–high-performance-ephemeral-data-plane.md)
+* [ACD-203: Crypto Gateway Performance](../acd/crypto-gateway–high-performance-ephemeral-data-plane.md)
