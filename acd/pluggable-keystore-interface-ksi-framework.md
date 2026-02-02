@@ -1,57 +1,84 @@
-# ACD-401: Pluggable Keystore Interface (KSI) Framework
+# ACD-401: OpenKCM Plugin Architecture & Abstraction Layers
 
 | Status | Date | Document Type |
 | :--- | :--- | :--- |
-| **Active** | 2026-01-16 | Architecture Concept Design |
+| **Active** | 2026-02-02 | Architecture Concept Design |
 
 ## Overview
-The **OpenKCM Plugin Architecture (Identity, Keystore, SystemInfo, Notify)** is the infrastructure abstraction layer of the OpenKCM ecosystem. It serves as the "Universal Translator" that decouples the high-level cryptographic operations of the Crypto (Krypton) (L2/L3 management) from the low-level API specificities of physical storage providers.
+The **OpenKCM Plugin Architecture** is the infrastructure abstraction layer of the ecosystem. It serves as the "Universal Translator" that decouples the high-level cryptographic operations of the **Governance Control Plane (CMK)** and **Execution Plane (Crypto/Gateway)** from the low-level API specificities of physical providers.
 
-In a multi-cloud or hybrid world, a sovereign platform cannot be tightly coupled to a single vendor's API (e.g., exclusively using AWS KMS APIs). The OpenKCM Plugin Architecture (Identity, Keystore, SystemInfo, Notify) ensures that OpenKCM can operate identically whether it is deployed on AWS, Azure, Google Cloud, or an air-gapped bare-metal cluster backed by Hardware Security Modules (HSMs).
+This framework ensures that OpenKCM can operate identically whether deployed on AWS, Azure, Google Cloud, or an air-gapped bare-metal cluster backed by Hardware Security Modules (HSMs).
 
-## The Driver Architecture
-The KSI operates on a strictly defined **Driver Model**. The OpenKCM Crypto (Krypton) interacts exclusively with the generic OpenKCM Plugin Architecture (Identity, Keystore, SystemInfo, Notify), while interchangeable drivers handle the translation to the backend provider.
+## The Plugin Ecosystem
+As defined in the architecture, the plugin system is composed of four distinct pillars that exist within the **CMK API Server** and the **Krypton** components.
 
+| Plugin Type | Responsibility | Implementation Context |
+| :--- | :--- | :--- |
+| **Identity** | Authenticating the OpenKCM node to the environment (e.g., OIDC, IAM). | CMK, Krypton |
+| **Keystore (KSI)** | Persisting encrypted key blobs (L2/L3) and L1 Pointers. | CMK, Krypton |
+| **SystemInfo** | Reporting health, versioning, and capabilities. | CMK, Krypton, Gateway |
+| **Notify** | Broadcasting governance events (Link/Unlink) to the Orbital mesh. | CMK |
 
+## The Driver Architecture by Component
 
-### The Interface Contract
-The OpenKCM Plugin Architecture (Identity, Keystore, SystemInfo, Notify) defines a Go interface that every driver must implement. This contract guarantees uniform behavior for all cryptographic storage operations:
-* `Put(keyID, blob, metadata)`: Persist an encrypted object.
-* `Get(keyID)`: Retrieve an encrypted object and its metadata.
-* `Delete(keyID)`: Permanently remove an object (Crypto-Shredding).
-* `Health()`: Verify connectivity and permissions with the backend.
+The specific role of the plugins changes depending on which component they are serving (The Brain, The Muscle, or The Edge).
 
-### Identity Federation (Credential-less Access)
-To maintain the **Zero-Trust** security posture, the OpenKCM Plugin Architecture (Identity, Keystore, SystemInfo, Notify) framework avoids storing long-lived credentials (like AWS Access Keys or Service Principals) within the application. Instead, it relies on **Workload Identity Federation**:
-1.  **OIDC Exchange:** The OpenKCM node presents its signed Kubernetes Service Account Token (JWT) to the external provider (e.g., AWS IAM or Azure AD).
-2.  **Ephemeral Access:** The provider validates the OIDC signature and issues a temporary, scoped access token valid for the duration of the operation or session.
+### 1. CMK API Server (The Brain)
+The CMK uses plugins to manage the **Sovereign Link** to the customer's external root.
+
+* **Role:** Manage L1 Key Pointers (Shadow References).
+* **Primary Plugin:** **Identity & Keystore**.
+* **Target Backend:** **External Physical Vaults (L1 Root of Trust)**.
+    * *Cloud Providers:* AWS KMS, Azure Key Vault, GCP KMS.
+    * *HSM Providers:* Thales HSM, HashiCorp Vault.
+* **Function:** The CMK does not hold keys; it uses the plugin to validating the existence and accessibility of the external L1 key.
+
+### 2. Krypton Core (The Muscle)
+The Regional Core uses plugins to manage the internal **L2 and L3 Key Hierarchy**.
+
+* **Role:** Key Material Storage (L2/L3) & Crypto Operations (Wrap/Unwrap).
+* **Primary Plugin:** **Key Material Storage / Keystore**.
+* **Target Backend:**
+    * *Internal Vaults:* Encrypted Storage (e.g., PostgreSQL, internal secure storage).
+    * *External Unseal:* Connects to L1 Vaults (AWS/Azure) strictly for the **L2 Unsealing** operation.
+* **Function:** Handles the encryption and decryption of the intermediate keys (L2/L3) that form the chain of trust.
+
+### 3. Krypton Gateway (The Edge)
+The Gateway uses plugins to manage the high-velocity **L4 Data Encryption Keys**.
+
+* **Role:** L4 Key Store (Creation & Retrieval).
+* **Primary Plugin:** **Key Material Storage**.
+* **Target Backend:** **External Physical Vaults (Key Material Storages)**.
+    * *Examples:* **OpenBao**, **HashiCorp Vault**, Redis, or Encrypted SQL.
+* **Function:** The Gateway generates L4 keys locally and persists them (wrapped by L3) into the local pluggable vault. It never speaks to the L1 Root directly.
 
 ## Supported Provider Tiers
-OpenKCM categorizes drivers into tiers based on their capabilities and support level.
 
-### Tier 1: Cloud-Native Roots (Managed)
-*Drivers that interface with hyperscale cloud KMS providers. Used primarily for wrapping the MasterKey or storing L2 Sovereign Keys.*
-* **AWS KMS:** Uses the AWS SDK v2; maps OpenKCM Tenants to KMS Tags or Aliases.
-* **Azure Key Vault:** Uses the Azure SDK for Go; maps Tenants to distinct Key Vaults or Key Tags.
-* **Google Cloud KMS:** Uses the GCP KMS Client; supports Cloud EKM integration.
+### Tier 1: Cloud-Native Roots (L1 / MasterKey)
+*Drivers that interface with hyperscale cloud KMS providers. Used by CMK and Krypton Core for the Sovereign Link.*
+* **AWS KMS:** Maps OpenKCM Tenants to KMS Keys via ARN.
+* **Azure Key Vault:** Maps Tenants to Key Vault keys.
+* **Google Cloud KMS:** Supports Cloud EKM integration.
 
-### Tier 2: Enterprise & Hybrid (Sovereign)
-*Drivers for on-premise, air-gapped, or highly regulated deployments.*
-* **HashiCorp Vault:** Interfaces with the Transit and KV engines. Supports Namespacing for tenant isolation.
-* **Thales / Fortanix (KMIP/PKCS#11):** Generic drivers for connecting to legacy hardware HSMs or dedicated crypto appliances.
+### Tier 2: Enterprise & Hybrid (HSM / On-Prem)
+*Drivers for air-gapped or highly regulated deployments.*
+* **HashiCorp Vault:** Interfaces with Transit and KV engines.
+* **Thales / Fortanix (KMIP/PKCS#11):** Connects to legacy hardware HSMs.
+* **OpenBao:** Supported for CYOK/MYOK scenarios.
 
-### Tier 3: Development & Testing
-* **Encrypted SQL:** Stores key blobs in PostgreSQL (protected by a MasterKey). Used for metadata-heavy environments or where external KMS costs are prohibitive.
-* **In-Memory:** Ephemeral storage for unit testing and CI/CD pipelines.
+### Tier 3: Operational Storage (L4 / Cache)
+*High-performance drivers used by the **Crypto Gateway**.*
+* **OpenBao / HashiCorp Vault:** Secure persistence for L4 blobs.
+* **Redis / Encrypted SQL:** Alternative backends for high-speed L4 retrieval.
 
 ## Security & Isolation
-The OpenKCM Plugin Architecture (Identity, Keystore, SystemInfo, Notify) acts as the final gatekeeper before data hits the disk.
+The Plugin Architecture acts as the final gatekeeper before data hits the wire or disk.
 
-* **Encryption at Rest:** The OpenKCM Plugin Architecture (Identity, Keystore, SystemInfo, Notify) mandates that *no* key material (L2 or L3) is ever sent to the driver in plaintext. All payloads passed to `Put()` must already be wrapped by the parent key (MasterKey or L1).
-* **Metadata Binding:** The driver is responsible for persisting the **Authenticated Additional Data (AAD)** alongside the ciphertext. For example, in AWS, the `Tenant_ID` is written as an encryption context tag.
+* **Encryption at Rest:** The framework enforces that **no key material** (L2, L3, or L4) is ever sent to a `Keystore` driver in plaintext. All payloads passed to `Put()` must already be wrapped.
+* **Identity Federation:** To maintain **Zero-Trust**, the Identity plugins utilize workload identity (e.g., Kubernetes Service Account tokens) to authenticate with external vaults (AWS/Azure) without storing static credentials.
 
 ## Summary
-This document defines how OpenKCM achieves **Infrastructure Independence**. By abstracting the storage layer into a Pluggable Keystore Interface, the platform ensures that:
-1.  **Portability is Absolute:** A tenant's key hierarchy can be migrated from AWS to Azure to On-Prem simply by changing the KSI driver configuration.
-2.  **Lock-in is Eliminated:** The application logic never depends on proprietary vendor APIs.
-3.  **Security is Uniform:** The enforcement of strict interface contracts ensures that a security policy defined in the Governance layer is respected regardless of the underlying hardware.
+ACD-401 defines how OpenKCM achieves **Infrastructure Independence**. By abstracting the storage and identity layers through the `Identity`, `Keystore`, `SystemInfo`, and `Notify` plugins, the platform ensures that:
+1.  **Portability:** The platform can run on any cloud or on-prem hardware.
+2.  **Sovereignty:** L1 keys remain in the customer's external vault, accessed only via the abstract plugin interface.
+3.  **Flexibility:** The Gateway can swap its storage backend (e.g., from OpenBao to Redis) without changing the application code.

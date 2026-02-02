@@ -2,7 +2,7 @@
 
 | Status | Date | Document Type |
 | :--- | :--- | :--- |
-| **Active** | 2026-01-13 | Architecture Concept Design |
+| **Active** | 2026-02-02 | Architecture Concept Design |
 
 ## Overview
 The **Root of Trust** is the foundational security pillar of the OpenKCM ecosystem. It defines how the platform establishes its identity, maintains multi-tenant isolation, and bootstraps its internal cryptographic engines across multi-cloud environments.
@@ -14,57 +14,54 @@ OpenKCM employs a recursive envelope encryption model where each layer cryptogra
 
 ### Layer Responsibilities & Storage
 
-| Layer | Scope | Purpose | Storage / Keystore Provider |
-| :--- | :--- | :--- | :--- |
-| **L1** | Global / Root | **Customer Master Key (CMK)**: The ultimate root of trust. Customer-owned and managed. | External KMS/HSM (AWS, Azure, GCP, Thales, Fortanix) |
-| **L2** | Tenant | **Tenant Encryption Key**: Provides mathematical siloing and isolation between unique customers. | Internal Secure Vault / OpenBao |
-| **L2.1** | Tenant Version | **Versioned Tenant Keys**: Facilitates seamless key rotation, rollback, and per-resource versioning. | Internal Registry (Encrypted) |
-| **L3** | Service | **Service Key**: Isolates specific application domains (e.g., "Payments", "PII-Vault", "Logs"). | Internal Secure Storage |
-| **L4** | Workload | **Data Encryption Key (DEK)**: Ephemeral, short-lived keys used for per-record encryption/decryption. | Crypto (Krypton) Gateway Memory (KMIP) |
+| Layer | Scope | Purpose | Owner | Storage Location |
+| :--- | :--- | :--- | :--- | :--- |
+| **L1** | Global | **Customer Master Key (CMK)**: The ultimate kill-switch. Never leaves the customer's external hardware. | **Customer** | External KMS/HSM (AWS, Azure, Thales) |
+| **L2** | Tenant | **Tenant Root**: Provides mathematical siloing between customers. Derived only after L1 handshake. | **Core** | Regional Core Vault (Encrypted) / Core RAM (Plaintext) |
+| **L3** | Service | **Service Key (KEK)**: Isolates specific domains (e.g., "Payments", "Logs"). Used to wrap L4s. | **Core** | Regional Core Vault (Encrypted) / Core RAM (Plaintext) |
+| **L4** | Workload | **Data Key (DEK)**: Ephemeral keys for high-speed local encryption. | **Gateway** | **Gateway Pluggable Internal Vault** (Ciphertext) |
 
+## MasterKey Management (Platform Bootstrap)
+Before the **OpenKCM Crypto (Krypton) Core** can process any tenant data, it must first "Unlock Itself." This process relies on the **MasterKey**—the cryptographic root of the Regional Core itself (distinct from Customer L1 keys).
 
+OpenKCM supports two primary bootstrap modes for the Regional Core:
 
-## MasterKey Management & System Bootstrapping
-To reach an operational state, the **OpenKCM Crypto (Krypton)** must reconstruct its internal **MasterKey** to decrypt the system registry and access tenant keys. OpenKCM supports two primary bootstrap modes based on security requirements.
-
-### Shamir Secret Sharing (SSS) – The "Four-Eyes" Strategy
+### 1. Shamir Secret Sharing (SSS) – The "Four-Eyes" Strategy
 In high-security, sovereign, or regulated deployments, the MasterKey is never stored in a single location.
-* **Mechanism**: The MasterKey is split into **N shards**; a minimum threshold of **M shards** is required to reconstruct the key.
+* **Mechanism**: The MasterKey is split into **N shards** (e.g., 5); a minimum threshold of **M shards** (e.g., 3) is required to reconstruct the key.
 * **Stakeholder Control**: Shards are distributed across different cloud providers, regions, or physical stakeholders to prevent single-point compromise.
-* **Recovery**: Requires a manual or orchestrated multi-party ceremony to bring the system online.
+* **Recovery**: Requires a manual or orchestrated multi-party ceremony to bring the Regional Core online.
 
-### Seal Auto-Unseal – The "Cloud-Native" Strategy
-Designed for high-availability, automated containerized environments.
-* **Mechanism**: The MasterKey is "sealed" (encrypted) by a trusted external KMS or an on-premise HSM.
-* **Automated Flow**: At startup, the Crypto Service identifies itself via mTLS and IAM, requesting the KMS to unseal the MasterKey directly into secure memory.
-* **Benefit**: Enables zero-touch recovery and seamless horizontal scaling.
+### 2. Auto-Unseal – The "Cloud-Native" Strategy
+Designed for high-availability, automated containerized environments where manual intervention is not feasible.
+* **Mechanism**: The MasterKey is "sealed" (encrypted) by a trusted Cloud KMS (e.g., AWS KMS) or an on-premise HSM.
+* **Automated Flow**: At startup, the Core identifies itself via mTLS/IAM, requests the external KMS to unseal the MasterKey, and boots into memory.
+* **Benefit**: Enables zero-touch recovery and seamless horizontal scaling of Core nodes.
 
 ## Keystore Integration Archetypes
-OpenKCM abstracts complex provider APIs into a unified interface, supporting three primary integration patterns:
+OpenKCM abstracts complex provider APIs into a unified **Sovereign Link** interface, supporting three primary integration patterns for the L1 Root:
 
-* **BYOK (Bring Your Own Key)**: Customer provides key material to be managed within the provider's KMS environment.
-* **HYOK (Hold Your Own Key)**: Key material never leaves the customer's physical HSM; OpenKCM only sends "Wrap/Unwrap" requests to the hardware.
-* **CYOK/MYOK (Control/Manage Your Own Key)**: Full lifecycle management where the customer maintains the key policy in their native cloud account (AWS/GCP/Azure).
+* **BYOK (Bring/Link Your Own Key)**: Customer provides key material (or a reference to it) to be managed within the provider's KMS environment. The Core "Links" to this key for L2 unsealing.
+* **HYOK (Hold Your Own Key)**: Key material never leaves the customer's physical HSM; OpenKCM sends "Wrap/Unwrap" requests over the network to the hardware anchor.
+* **CYOK (Control Your Own Key)**: Full lifecycle management where the customer maintains the key policy in their native cloud account, and OpenKCM operates as a delegated principal.
 
 ## Security Controls & Operational Integrity
 
 ### Cryptographic Isolation
 * **Mathematical Siloing**: Tenant A’s L2 key is wrapped by an L1 key that Tenant B cannot access. Cross-tenant leakage is physically impossible at the hardware level.
-* **Zero-Knowledge Implementation**: OpenKCM Core handles encrypted key references; plaintext material for L1 and L2 is only present in volatile secure memory during active operations.
+* **Split-Execution Memory**: The **Gateway** never holds L2 or L3 keys. The **Core** never persists L4 keys. This limits the blast radius of any single component compromise.
 
 ### Access & Separation of Duties
-* **Governance vs. Execution**: CMK Service administrators (who manage policy) cannot access the Crypto Service memory where unsealed keys reside.
-* **Four-Eyes Principle**: Optional SSS enforcement ensures that no single rogue administrator can bootstrap the system.
+* **Governance vs. Execution**: CMK Service administrators (who manage policy in the Control Plane) cannot access the Crypto (Krypton) Core memory where unsealed keys reside.
+* **Four-Eyes Principle**: Optional SSS enforcement ensures that no single rogue administrator can bootstrap the Regional Core or export the MasterKey.
 
 ### Compliance & Audit
 * **Non-Repudiable Logs**: Every key generation, rotation, or unwrap event generates a unique Correlation ID.
-* **End-to-End Traceability**: Correlation IDs link internal application requests directly to the customer’s own CloudTrail or KMS logs, providing verifiable proof of access.
+* **End-to-End Traceability**: Correlation IDs link internal application requests directly to the customer’s own CloudTrail or KMS logs, providing verifiable proof that **only authorized L1 access occurred**.
 
 ## Summary
-This document establishes the **Sovereignty Firewall** of the OpenKCM platform. By enforcing a strict hierarchical model and supporting robust unsealing strategies, the platform ensures that:
+ACD-302 establishes the **Sovereignty Firewall** of the OpenKCM platform. By enforcing a strict distinction between the **Platform Root** (MasterKey) and the **Tenant Root** (L1), the architecture ensures that:
 
 1.  **Sovereignty is Absolute**: The customer’s L1 key remains the ultimate "Kill Switch."
-2.  **Performance is Uncompromised**: The hierarchy allows for gateway-native L4 operations with sub-millisecond latency.
+2.  **Platform is Resilient**: The Core can be bootstrapped automatically (Auto-Unseal) or securely (Shamir) depending on the threat model.
 3.  **Liability is Minimized**: The provider shifts the risk of root-key compromise back to the hardware-backed customer account.
-
-OpenKCM turns the **Root of Trust** into a **Strategic Value Engine**, allowing SaaS providers to win the most regulated enterprise deals by offering mathematical proof of data ownership.

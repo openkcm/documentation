@@ -2,59 +2,62 @@
 
 | Status | Date | Document Type |
 | :--- | :--- | :--- |
-| **Active** | 2026-01-16 | Architecture Concept Design |
+| **Active** | 2026-02-02 | Architecture Concept Design |
 
 ## Overview
-**Global Resilience** in OpenKCM defines how the platform survives catastrophic infrastructure failures without compromising cryptographic sovereignty or data consistency. In a distributed key management system, "Resilience" often conflicts with "Security" (e.g., failing open vs. failing closed).
+**Global Resilience** in OpenKCM defines how the platform survives catastrophic infrastructure failures without compromising cryptographic sovereignty.
 
-This document details the **Sovereign Reconciliation Strategy**, ensuring that regional Crypto (Krypton) clusters can operate autonomously during network partitions while guaranteeing that global governance intent (e.g., a "Revoke" command) is eventually and reliably enforced.
+This document clarifies the **Split-Lifecycle Responsibility** model. While the Global Registry orchestrates the "Birth" and "Death" of tenants, the Regional Krypton Core is the sole authority for their "Life" (Rotation and Maintenance).
 
-## The Resilience Philosophy: "Local Trust, Global Command"
-OpenKCM is designed as a **Loose Federation of Autonomous Regions**.
-* **The Brain (CMK Registry):** Lives in a primary region (e.g., `us-east-1`). It holds the "Desired State."
-* **The Limbs (Crypto Cores):** Live in gateway regions (e.g., `eu-central-1`, `ap-northeast-1`). They hold the "Actual State."
+## The Resilience Philosophy: "Registry Orchestrates, Core Maintains"
+OpenKCM divides responsibilities to ensure that routine security maintenance (Rotation) is never blocked by global control plane availability.
 
-If the connection between the Brain and the Limbs is severed, the Limbs **continue to function** for existing authorized workloads but **fail safe** for lifecycle changes.
+### 1. The CMK Registry (Lifecycle Orchestrator)
+* **Role:** The "Conductor" of the platform.
+* **Responsibility:** **Tenant Lifecycle Triggers (Create/Delete).**
+  * **Onboarding:** When a new Tenant is defined, the Registry instructs the Core to "Initialize L2/L3 Structure" (Create).
+  * **Offboarding:** When a Tenant is removed, the Registry instructs the Core to "Purge L2/L3 Structure" (Delete).
+  * **Scope:** It defines *who* exists (Tenant IDs) and *where* they exist (Region Allow-List).
+* **Constraint:** The Registry triggers the *existence* of tenants but does not manage key versioning, rotation schedules, or L1 Pointers.
 
-
+### 2. The Krypton Core (Maintenance Authority)
+* **Role:** The "Engine" of the platform.
+* **Responsibility:** **Key Maintenance & Rotation.**
+  * Once a tenant is initialized, the Core owns the key timeline.
+  * **Rotation:** The Core's internal scheduler triggers L2 & L3 rotation based on policy (e.g., "Rotate every 90 days").
+  * **Persistence:** The Core persists the rotated blobs in its local Regional Vault via Plugins.
 
 ## Disaster Recovery Tiers
 
 ### Tier 1: Regional Autonomy (Network Partition)
-*Scenario: The fiber cut between the US and Europe isolates the EU Crypto (Krypton) from the Global Registry.*
-* **Read Operations (L4 Decrypt):** **Unaffected.** The EU Core has the L2 and IVK keys cached in its local secure memory and local KSI. It continues to serve KMIP traffic.
-* **Write Operations (L4 Encrypt):** **Unaffected.** New DEKs can be generated locally.
-* **Governance Operations (L2 Rotation/Revocation):** **Paused.** The local node cannot confirm the current status of the tenant's L1 key with the central registry. It defaults to the last known good state (cached policy) for a configurable TTL (e.g., 1 hour), after which it fails closed.
+*Scenario: The fiber cut between the Global Registry (CMK) and the Regional Core (e.g., EU-Central) isolates the region.*
+
+* **Tenant Lifecycle (Create/Delete):** **Paused.**
+  * The Region cannot receive instructions to onboard new tenants.
+  * Existing tenants cannot be offboarded (keys remain active until connectivity restores).
+* **Key Maintenance (Rotation):** **Unaffected.**
+  * The **Krypton Core** continues to execute scheduled rotations for L2 and L3 keys.
+  * It interacts directly with the **External L1 Provider** (via Plugins) to wrap new versions.
+  * **Zero Dependency:** Rotation succeeds even if the Registry is unreachable for days.
+* **L4 Operations:** **Unaffected.**
+  * The Gateway continues to function using the Core's local state.
 
 ### Tier 2: Region Failure (Cluster Loss)
-*Scenario: The entire `us-west-2` Crypto (Krypton) cluster is destroyed.*
-* **Data Plane:** KMIP traffic fails over to the nearest healthy region (e.g., `us-east-1`).
-* **Key Hydration:** The survivor region (`us-east-1`) queries the **Global Registry** for the tenant's metadata.
-* **Re-Bootstrap:** The survivor region connects to the Customer's L1 KMS (which is multi-region by default in AWS/Azure) to unwrap the L2 key.
-* **Result:** Zero data loss. The L2 key is mathematically identical, just loaded into a different region's memory.
+*Scenario: The entire `us-west-2` Regional Core is destroyed.*
+
+* **Failover:** Traffic routes to a secondary region (e.g., `us-east-1`).
+* **Tenant Hydration:** The survivor region queries the **CMK Registry** to get the **Tenant Definition** (Identity & Region Scope).
+* **State Recovery:** The survivor region reconstructs the L2/L3 hierarchy using the definition provided by the Registry and the material available in the shared/replicated storage.
 
 ### Tier 3: Global Registry Failure (Brain Death)
 *Scenario: The central CMK database is corrupted or unreachable.*
-* **Safety Protocol:** Regional Cores enter **"Standby Mode."**
-* **Capabilities:** They continue to serve *existing* keys indefinitely based on their local snapshot.
-* **Limitation:** No *new* tenants can be onboarded, and no *new* L2 keys can be generated.
-* **Recovery:** The Registry is restored from an immutable, encrypted backup. **Orbital** then pushes a "State Resync" event to all regions to reconcile any drift.
 
-## The Orbital Reconciliation Loop
-Resilience is powered by **Orbital**, the state synchronization engine (ACD-201).
-
-1.  **Snapshotting:** Every 5 minutes, the Regional Core takes a cryptographic snapshot of its active Key State (list of loaded L2s, active IVK versions).
-2.  **Heartbeat:** This snapshot hash is sent to the Global Registry.
-3.  **Diff Calculation:** The Registry compares the Regional Hash with its Authoritative Hash.
-4.  **Remediation:** If a discrepancy is found (e.g., Region has an L2 that the Registry says should be revoked), Orbital issues a high-priority **"Force Sync"** command to the region.
-
-
-
-## Sovereign Conflict Resolution
-In a "Split-Brain" scenario where the Region thinks a key is valid but the Registry says it is revoked, **Security Trumps Availability.**
-
-* **The Rule:** If the Region cannot reach the Registry to validate an L2 key's status after the TTL expires, the key is **Disabled**.
-* **Why:** It is better to cause a service outage than to allow a revoked tenant to decrypt data. This preserves the "Sovereign Kill Switch" guarantee.
+* **Impact on Crypto:** **Zero.**
+  * Regional Cores function normally for all existing tenants.
+  * **L2/L3 Rotations continue on schedule** because the Registry is not involved in rotation.
+* **Impact on Management:**
+  * **Frozen State:** No new tenants can be created. No existing tenants can be deleted.
+  * The platform is statically locked but cryptographically active and secure.
 
 ## Summary
-ACD-402 defines a resilience model that prioritizes **Data Integrity and Sovereignty** over blind availability. By empowering regions to act autonomously for routine operations while strictly enforcing global governance for state changes, OpenKCM ensures that a localized failure never compromises the global trust model.
+ACD-402 defines a resilience model where **Availability of Management** (Registry) is decoupled from **Availability of Security** (Core). By isolating **Rotation** as a purely regional function, OpenKCM ensures that the most critical security operation—keeping keys fresh—continues even during total global control plane failure.

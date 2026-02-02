@@ -1,4 +1,4 @@
-# ACD-101: OpenKCM Strategic Vision & Cryptographic Governance Model
+# ACD-100: OpenKCM Strategic Vision & Cryptographic Governance Model
 
 | Status | Date | Document Type |
 | :--- | :--- | :--- |
@@ -13,14 +13,15 @@ In the modern sovereign-cloud era, traditional security is a cost center. OpenKC
 To achieve absolute sovereignty without performance degradation, OpenKCM enforces a strict separation of duties between the logic of access (**Governance**) and the act of encryption (**Execution**).
 
 ### OpenKCM CMK: The Governance Control Plane
-The **CMK** is the "Brain" of the ecosystem. It manages the **Intent** of security without ever possessing the material to execute it.
-* **Sovereign Anchor:** Manages **Shadow References** to **L1 Root Keys** held exclusively in customer-owned environments (AWS KMS, Azure Key Vault, GCP KMS, or Private HSMs).
-* **Security Barrier:** The CMK handles metadata, policy (Cedar), and encrypted unseal requests but is physically and logically barred from touching plaintext key material.
-* **Active-Standby State:** Writes all policy and configuration to the **Active** node of the Schema-per-Tenant Postgres cluster, ensuring high availability and strict consistency.
+The **CMK Service** acts as the "Brain" of the OpenKCM ecosystem. It defines the **Intent** of security policy while remaining cryptographically decoupled from the execution, ensuring it never possesses the raw key material required to decrypt data.
+
+* **Sovereign Anchor:** It maintains **Shadow References** (pointers) to L1 Root Keys that reside exclusively in customer-controlled environments (such as AWS KMS, Azure Key Vault, or Private HSMs), ensuring the root of trust never leaves the customer's domain.
+* **Security Barrier:** The CMK facilitates encrypted unsealing requests but is architecturally and logically barred from accessing or processing plaintext key material.
+* **Active-Standby State:** It ensures strict consistency and high availability by persisting all configuration data to the **Active** node of a **Schema-per-Tenant** PostgreSQL cluster.
 
 ### OpenKCM Crypto: The Execution Plane
 The **Crypto** layer is the "Muscle." It consists of regional and gateway nodes designed for zero-latency cryptographic operations.
-* **OpenKCM Crypto (Krypton):** The regional authority that manages the lifecycle of **L2 (Tenant/Account)** and **L3 (App/Service)** keys. It performs the "Recursive Unsealing" required to activate a tenant's environment and executes stateless **L4 Wrap/Unwrap** operations via KMIP.
+* **OpenKCM Crypto (Krypton):** The regional authority that manages the lifecycle of **L2 (Tenant/Account seen as a System)** and **L3 (App/Service)** keys. It performs the "Recursive Unsealing" required to activate a tenant's environment and executes stateless **L4 Wrap/Unwrap** operations via KMIP (Key Management Interoperability Protocol).
 * **OpenKCM Crypto (Krypton) Gateway:** Distributed, high-speed interfaces that handle the "Hot Path" of **L4 DEK** generation and management via KMIP. The Gateway operates close to the tenant workloads, ensuring sub-millisecond encryption.
 
 ## The Sovereignty Engine: Recursive Unsealing & Shadow Keys
@@ -59,7 +60,7 @@ The Crypto Layer handles the "operational reality" of security—ensuring that b
 * **MasterKey Protection**: Reconstructs the internal MasterKey via Shamir Secret Sharing (SSS) or Seal auto-unseal into secure memory only.
 * **Lifecycle Automation**: Handles rotation, versioning, and archiving of L2/L3 keys.
 * **Root of Trust Bootstrap**: Initializes via the **Keystore Plugin**, loading the necessary credentials to unseal the L2 keys from the Shadow References.
-* **High-Performance KMIP**: Performs high-speed Wrap/Unwrap operations for **L4 DEKs** against the **L3 KEK**.
+* **High-Performance KMIP**: Performs high-speed Wrap/Unwrap operations for **L4 DEKs (Data Encryption Key)** against the **L3 KEK (Key Encryption Key)**.
 
 ### OpenKCM Crypto (Krypton) Gateway
 * **Dedicated Gateway Service**: Deployed as a standalone service close to workloads, managing high-throughput operations.

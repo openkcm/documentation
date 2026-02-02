@@ -2,10 +2,10 @@
 
 | Status | Date | Document Type |
 | :--- | :--- | :--- |
-| **Active** | 2026-01-31 | Architecture Concept Design |
+| **Active** | 2026-02-02 | Architecture Concept Design |
 
 ## Overview
-The **OpenKCM CMK** (Customer Managed Key) service is the authoritative governance engine and the "Brain" of the ecosystem. It provides the **Sovereign Portal**—the primary administrative interface where customers exercise direct ownership over their **L1 External Keys**.
+The **OpenKCM CMK (Customer Managed Key)** service is the authoritative governance engine and the "Brain" of the ecosystem. It provides the **Sovereign Portal**—the primary administrative interface where customers exercise direct ownership over their **L1 External Keys**.
 
 To eliminate the risk of single-user compromise or rogue insider actions, the CMK Service houses the **Internal Workflow Management** engine. This engine enforces a strict **Multi-Party Authorization (MPA)** model, ensuring that no high-impact security decision is made by a single individual. By transforming administrative actions into a formal consensus process, OpenKCM shifts the liability from the provider to a verifiable, multi-actor business process.
 
@@ -15,8 +15,6 @@ Traditional key management relies on "Super Admins" who possess god-like powers 
 * **Insider Threat Mitigation:** Even if a high-privileged account is compromised, the attacker cannot revoke keys or change policies without a second authorized approval.
 * **Operational Quality Control:** Workflows act as a "peer review" for security configurations, preventing accidental data lockouts caused by human error.
 * **Regulatory Compliance:** Satisfies stringent requirements (e.g., TISAX, SOC2, GDPR) that mandate "Separation of Duties" and the "Four-Eyes Principle."
-
-
 
 ## The Sovereign Portal (UI/UX)
 The Portal is the human-centric interface for the CMK, serving as a **Collaboration Hub** for security governance. It is the primary tool used by administrators to define the security parameters of the organization.
@@ -36,8 +34,6 @@ The CMK Service is the enforcement point for the "Four-Eyes Principle." Every se
 2.  **Notification (The Alert):** The Workflow Engine identifies the required "Approver Pool" based on the Administrator's configuration.
 3.  **Ratification (The Approver):** A second administrator logs into the Portal to review the pending request.
 4.  **Execution (The Activation):** Only after the second signature is the state transitioned to `ACTIVE` and propagated via **Orbital**.
-
-
 
 ### Business Scenarios for Multi-Party Approval
 

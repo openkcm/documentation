@@ -5,7 +5,7 @@
 | **Active** | 2026-01-31 | Architecture Concept Design |
 
 ## Overview
-The **CMK Registry** is the "Front Door" and **Business Inventory System** of the OpenKCM ecosystem. While the CMK Service (ACD-102) acts as the secure execution environment for sovereign operations, the Registry provides the essential **Global Discovery** and **Governance Topology**.
+The **CMK Registry** is the "Front Door" and **Business Inventory System** of the OpenKCM ecosystem. While the CMK Service (ACD-101) acts as the secure execution environment for sovereign operations, the Registry provides the essential **Global Discovery** and **Governance Topology**.
 
 It serves as the **Global Switchboard**, answering the three fundamental business questions required to operate a Sovereign Cloud at scale:
 1.  **Who are our customers?** (Tenant Lifecycle)
@@ -39,22 +39,6 @@ The Registry maintains a comprehensive catalog of all **Systems**, which represe
 The Registry serves as the central directory for **Principals** (Users and Service Accounts).
 * **Identity Normalization:** Connects to corporate Identity Providers (OIDC/SPIFFE) to resolve external identities into the OpenKCM context.
 * **Tenant-to-User Mapping:** Defines the high-level relationship of which administrators are permitted to access which L2 key environments.
-
-## Governance Use Cases
-
-### 1. Managed Service Provider (MSP) Efficiency
-* **Challenge:** Managing encryption accounts for 50 diverse enterprise clients across different regions.
-* **Registry Solution:** The MSP admin logs into the Registry and views 50 isolated L2 systems from one dashboard. They initiate a global compliance report, and the Registry orchestrates the request across 50 sovereign schemas.
-
-### 2. Strategic Data Sovereignty
-* **Scenario:** A customer demands that their "Account" data never leaves a specific German data center.
-* **Action:** The Admin configures the System/L2 in the Registry with `Region: DE-Frankfurt`.
-* **Result:** The Registry ensures all subsequent CMK Service workflows and data storage are physically restricted to that specific sovereign zone.
-
-### 3. Security Posture Auditing
-* **Scenario:** A CISO needs to know if all "Production Accounts" are correctly protected.
-* **Action:** A query to the Registry's Inventory Service filtered by labels (`env=prod`).
-* **Result:** Immediate visibility into the global security posture without needing the authority to access the actual encryption keys.
 
 ## Risk & Liability Model
 The Registry is architected as a **Minimal Liability Layer**.

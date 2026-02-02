@@ -3,8 +3,10 @@
 This index defines the high-level conceptual frameworks and strategic paradigms that govern the OpenKCM ecosystem. These documents articulate the "Value Engine" philosophy, explaining how OpenKCM solves the "Trust Paradox" by structurally decoupling Governance (Intent) from Execution (Action).
 
 ### I. Strategic Core & Governance Control Plane
-* [**ACD-101: OpenKCM Strategic Vision & Cryptographic Governance Model**](openkcm-strategic-vision.md)
+* [**ACD-100: OpenKCM Strategic Vision & Cryptographic Governance Model**](openkcm-strategic-vision.md)
   * **Concept**: Defines OpenKCM as a "Value Engine" that separates Global Policy (CMK) from Regional Execution (Crypto). It establishes the business case for "Liability Shift" and the technical foundation for solving the Trust Paradox.
+* [**ACD-101: OpenKCM CMK (Customer Master Key) – Governance Control Plane**](cmk-governance-control-plane.md)
+  * **Concept**: The **OpenKCM CMK Service** acts as the centralized "Brain" and governance anchor of the platform, decoupling the **Policy of Sovereignty** (ownership/identity) from the **Execution of Cryptography** (encryption/decryption). It serves as the authoritative Single Pane of Glass for managing tenant registries, enforcing global compliance policies, and orchestrating the "Sovereign Link" to external Hardware Roots of Trust (L1), ensuring that while execution is distributed for scale, control remains centralized for security.
 * [**ACD-102: OpenKCM CMK & Sovereign Portal**](cmk-service-portal.md)
   * **Concept**: The "Human Head" of the platform. Covers the Sovereign Portal, the administrative workflows for BYOK/HYOK, and the "Sovereign Kill-Switch" that allows customers to revoke L1 keys and instantly lock global data.
 * [**ACD-103: CMK Registry & Global Tenant Governance**](cmk-registry-and-tenant-metadata-governance.md)
@@ -33,9 +35,7 @@ This index defines the high-level conceptual frameworks and strategic paradigms 
   * **Concept**: The automated logic for time-based and event-based rotation. Defines "Lazy Re-encryption" vs. "Deep Re-keying" strategies to ensure security hygiene without forcing application downtime.
 
 ### IV. Ecosystem Integration & Resilience
-* [**ACD-401: Pluggable Keystore Interface (KSI) Framework**](pluggable-keystore-interface-ksi-framework.md)
+* [**ACD-401: OpenKCM Plugin Architecture & Abstraction Layers**](pluggable-keystore-interface-ksi-framework.md)
   * **Concept**: The abstraction layer allowing OpenKCM to support heterogeneous external providers (AWS KMS, Azure Key Vault, GCP KMS, Thales, Fortanix) through a unified driver model.
 * [**ACD-402: Global Resilience & Sovereign Reconciliation**](global-resilience-and-sovereign-reconciliation.md)
   * **Concept**: The strategy for cross-region disaster recovery, ensuring that Orbital can re-hydrate regional node state from the central Registry without compromising cryptographic boundaries.
-* **ACD-403: Application Integration Patterns & SDKs**
-  * **Concept**: The developer experience manual. Defines the standard patterns for integrating SaaS workloads with OpenKCM, including the use of Client SDKs, Sidecars, and local caching strategies for L4 keys.
