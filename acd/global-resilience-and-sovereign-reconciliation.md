@@ -5,59 +5,71 @@
 | **Active** | 2026-02-02 | Architecture Concept Design |
 
 ## Overview
-**Global Resilience** in OpenKCM defines how the platform survives catastrophic infrastructure failures without compromising cryptographic sovereignty.
+**Global Resilience** in OpenKCM defines how the platform survives catastrophic infrastructure failures without compromising cryptographic sovereignty or data consistency.
 
-This document clarifies the **Split-Lifecycle Responsibility** model. While the Global Registry orchestrates the "Birth" and "Death" of tenants, the Regional Krypton Core is the sole authority for their "Life" (Rotation and Maintenance).
+The guiding principle is **"Radical Component Independence."** OpenKCM ensures that the **CMK Registry**, **CMK Server**, and **Krypton Core** operate as fully autonomous units. They do not depend on synchronous connectivity to each other to serve keys or process cryptographic operations.
 
-## The Resilience Philosophy: "Registry Orchestrates, Core Maintains"
-OpenKCM divides responsibilities to ensure that routine security maintenance (Rotation) is never blocked by global control plane availability.
+## The Architecture of Independence
+To achieve high availability, OpenKCM relies on **Orbital**, an asynchronous event mesh, to propagate state only when changes occur. There is no "chatty" API communication between components during normal operation.
 
-### 1. The CMK Registry (Lifecycle Orchestrator)
-* **Role:** The "Conductor" of the platform.
-* **Responsibility:** **Tenant Lifecycle Triggers (Create/Delete).**
-  * **Onboarding:** When a new Tenant is defined, the Registry instructs the Core to "Initialize L2/L3 Structure" (Create).
-  * **Offboarding:** When a Tenant is removed, the Registry instructs the Core to "Purge L2/L3 Structure" (Delete).
-  * **Scope:** It defines *who* exists (Tenant IDs) and *where* they exist (Region Allow-List).
-* **Constraint:** The Registry triggers the *existence* of tenants but does not manage key versioning, rotation schedules, or L1 Pointers.
+### 1. The Autonomous Actors
+Each component maintains its own local state and operates independently within its specific domain:
 
-### 2. The Krypton Core (Maintenance Authority)
-* **Role:** The "Engine" of the platform.
-* **Responsibility:** **Key Maintenance & Rotation.**
-  * Once a tenant is initialized, the Core owns the key timeline.
-  * **Rotation:** The Core's internal scheduler triggers L2 & L3 rotation based on policy (e.g., "Rotate every 90 days").
-  * **Persistence:** The Core persists the rotated blobs in its local Regional Vault via Plugins.
+* **CMK Registry (The Architect):** Defines the **Intent** and **Metadata**.
+  * It manages Tenant IDs and the **Key Definitions** (e.g., "Tenant X requires a 'System' L2 key").
+  * It dictates *what* should exist, but never holds the actual key material.
+* **CMK Server (The Sovereign Anchor):** Manages the **L1 Pointers**.
+  * It holds the authoritative **Shadow References** (ARNs) required to access the customer's external Root of Trust.
+  * It manages the Link/Unlink lifecycle events.
+* **Krypton Core (The Builder):** Executes the **Implementation**.
+  * It receives definitions from the Registry and pointers from the CMK Server.
+  * It generates, rotates, and manages the actual **Key Material** (L2/L3 blobs).
+  * It serves the data plane requests directly.
+
+### 2. The Orbital Event Flows
+Data is exchanged *only* when a state change occurs ("Propagation on Existence"). If the mesh is down, components continue operating on their last known good state.
+
+| Source | Destination                           | Event Type | Purpose                                                                                                      | Trigger |
+| :--- |:--------------------------------------| :--- |:-------------------------------------------------------------------------------------------------------------| :--- |
+| **Registry** | **CMK Server** </br> **Krypton Core** | `Tenant.Define` | Informs about tenant exists and is valid.                                                                    | Tenant Onboarding / Offboarding |
+| **Registry** | **Krypton Core**                      | `Key.Define` | Pushes **L2/L3 Metadata Definitions**. Instructs Krypton Core to generate/load material for specific scopes. | Service Onboarding / Offboarding |
+| **CMK Server** | **Krypton Core**                      | `L1.Reference` | Pushes the **L1 Pointer** (ARN) and **Link/Unlink** instructions.                                            | Customer links a new External Key |
 
 ## Disaster Recovery Tiers
 
 ### Tier 1: Regional Autonomy (Network Partition)
-*Scenario: The fiber cut between the Global Registry (CMK) and the Regional Core (e.g., EU-Central) isolates the region.*
+*Scenario: A fiber cut isolates the Regional Krypton Core from the Global Orbital Mesh.*
 
-* **Tenant Lifecycle (Create/Delete):** **Paused.**
-  * The Region cannot receive instructions to onboard new tenants.
-  * Existing tenants cannot be offboarded (keys remain active until connectivity restores).
-* **Key Maintenance (Rotation):** **Unaffected.**
-  * The **Krypton Core** continues to execute scheduled rotations for L2 and L3 keys.
-  * It interacts directly with the **External L1 Provider** (via Plugins) to wrap new versions.
-  * **Zero Dependency:** Rotation succeeds even if the Registry is unreachable for days.
-* **L4 Operations:** **Unaffected.**
-  * The Gateway continues to function using the Core's local state.
+* **Operational Status:** **Fully Functional.**
+  * The **Krypton Core** serves requests using the L2/L3 definitions and L1 pointers it previously received and cached.
+* **Cryptographic Lifecycle:** **Unaffected.**
+  * The **Krypton Core** continues to **Rotate L2 & L3 keys** on schedule.
+  * It communicates directly with the External L1 Provider (via Plugins) to wrap new keys.
+* **Impact:** The Region cannot receive *new* Key Definitions (e.g., deploying a new Microservice requiring a new L3 key), but all existing services operate normally.
 
-### Tier 2: Region Failure (Cluster Loss)
-*Scenario: The entire `us-west-2` Regional Core is destroyed.*
+### Tier 2: Component Failure (Independent Survival)
+*Scenario: The Global Registry crashes, but the CMK Server and Krypton Cores are healthy.*
 
-* **Failover:** Traffic routes to a secondary region (e.g., `us-east-1`).
-* **Tenant Hydration:** The survivor region queries the **CMK Registry** to get the **Tenant Definition** (Identity & Region Scope).
-* **State Recovery:** The survivor region reconstructs the L2/L3 hierarchy using the definition provided by the Registry and the material available in the shared/replicated storage.
+* **CMK Server:** Continues to manage L1 Links for existing tenants.
+* **Krypton Core:** Continues to serve encryption and rotate keys for existing definitions.
+* **Registry:** The platform cannot **Define New Keys** or **Onboard New Tenants** until restored.
 
-### Tier 3: Global Registry Failure (Brain Death)
-*Scenario: The central CMK database is corrupted or unreachable.*
+### Tier 3: Region Failure (Cluster Loss)
+*Scenario: A catastrophic failure destroys an entire Regional Krypton Core.*
 
-* **Impact on Crypto:** **Zero.**
-  * Regional Cores function normally for all existing tenants.
-  * **L2/L3 Rotations continue on schedule** because the Registry is not involved in rotation.
-* **Impact on Management:**
-  * **Frozen State:** No new tenants can be created. No existing tenants can be deleted.
-  * The platform is statically locked but cryptographically active and secure.
+* **Failover:** Traffic routes to a secondary region.
+* **Hydration:**
+  1.  Survivor Core receives **Key Definitions** (Metadata) from **Registry** (via Orbital).
+  2.  Survivor Core receives **L1 Pointer** from **CMK Server** (via Orbital).
+* **Recovery:** The Survivor Core uses the Pointer to unlock the L2 structure and regenerates or retrieves the L3 material matching the Registry's definitions.
+
+## Sovereign Conflict Resolution (Split-Brain)
+In a distributed system, eventual consistency can lead to temporary conflicts. OpenKCM resolves these by checking against the specific authority for each state type.
+
+1.  **Drift Detection:** The **Krypton Core** periodically emits a `State.Manifest` (containing active Tenant/Service IDs) via Orbital.
+2.  **Definition Reconciliation (Registry):** The **CMK Registry** consumes the manifest. If it detects the **Krypton Core** is holding keys for a Service that was **Deleted** from the Registry, it issues a `Key.Purge` event.
+3.  **Sovereign Reconciliation (CMK Server):** The **CMK Server** consumes the manifest. If it detects the **Krypton Core** is serving a Tenant that has been **Unlinked** (L1 Revoked), it issues a high-priority `L1.Revoke` event.
+4.  **The Deadman Switch:** If a **Krypton Core** is isolated from the **CMK Server** (its Sovereign Anchor) for longer than the **Strict Sovereign TTL** (e.g., 24 hours), it voluntarily pauses key serving to prevent "Zombie Sovereignty."
 
 ## Summary
-ACD-402 defines a resilience model where **Availability of Management** (Registry) is decoupled from **Availability of Security** (Core). By isolating **Rotation** as a purely regional function, OpenKCM ensures that the most critical security operation—keeping keys fresh—continues even during total global control plane failure.
+ACD-402 defines a resilience model based on **Asynchronous Independence**. By delegating the **Definition** of keys to the Registry, the **Sovereignty** to the CMK Server, and the **Generation** to the Krypton Core, OpenKCM guarantees that management outages never impact the security or availability of the active data plane.
