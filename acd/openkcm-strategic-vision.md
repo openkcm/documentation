@@ -2,84 +2,96 @@
 
 | Status | Date | Document Type |
 | :--- | :--- | :--- |
-| **Active** | 2026-01-31 | Architecture Concept Design |
+| **Active** | 2026-02-02 | Architecture Concept Design |
 
 ## Overview
 **OpenKCM** is the **Value Engine** that enables platforms to win bigger deals, capture higher margins, and operate with zero-risk liability in a world that demands absolute data ownership.
 
-In the modern sovereign-cloud era, traditional security is a cost center. OpenKCM transforms security into a **market differentiator** by solving the "Trust Paradox"—the conflict between providing total customer data ownership and the need for high-scale, cloud-native performance.
+In the modern sovereign-cloud era, traditional security is a cost center. OpenKCM transforms security into a **market differentiator** by solving the "Trust Paradox"—the conflict between providing total customer data ownership (Sovereignty) and the need for high-scale, cloud-native performance (Speed).
 
 ## Structural Pillar: The Governance & Execution Framework
 To achieve absolute sovereignty without performance degradation, OpenKCM enforces a strict separation of duties between the logic of access (**Governance**) and the act of encryption (**Execution**).
 
-### OpenKCM CMK: The Governance Control Plane
-The **CMK Service** acts as the "Brain" of the OpenKCM ecosystem. It defines the **Intent** of security policy while remaining cryptographically decoupled from the execution, ensuring it never possesses the raw key material required to decrypt data.
-
-* **Sovereign Anchor:** It maintains **Shadow References** (pointers) to L1 Root Keys that reside exclusively in customer-controlled environments (such as AWS KMS, Azure Key Vault, or Private HSMs), ensuring the root of trust never leaves the customer's domain.
-* **Security Barrier:** The CMK facilitates encrypted unsealing requests but is architecturally and logically barred from accessing or processing plaintext key material.
-* **Active-Standby State:** It ensures strict consistency and high availability by persisting all configuration data to the **Active** node of a **Schema-per-Tenant** PostgreSQL cluster.
-
-### OpenKCM Crypto: The Execution Plane
-The **Crypto** layer is the "Muscle." It consists of regional and gateway nodes designed for zero-latency cryptographic operations.
-* **OpenKCM Crypto (Krypton):** The regional authority that manages the lifecycle of **L2 (Tenant/Account seen as a System)** and **L3 (App/Service)** keys. It performs the "Recursive Unsealing" required to activate a tenant's environment and executes stateless **L4 Wrap/Unwrap** operations via KMIP (Key Management Interoperability Protocol).
-* **OpenKCM Crypto (Krypton) Gateway:** Distributed, high-speed interfaces that handle the "Hot Path" of **L4 DEK** generation and management via KMIP. The Gateway operates close to the tenant workloads, ensuring sub-millisecond encryption.
-
-## The Sovereignty Engine: Recursive Unsealing & Shadow Keys
-OpenKCM enforces security through a tiered key hierarchy where each layer is mathematically bound to the one above it, and where the provider holds only **pointers**, not secrets.
-
-1.  **L1 (External)**: Customer-owned Root of Trust (Physical Key). OpenKCM holds only a **Shadow Reference** (ARN).
-2.  **L2 (Tenant)**: Intermediate key providing mathematical isolation. Stored as an encrypted blob in a external vault, unwrappable *only* by the L1.
-3.  **L3 (Service)**: Provides isolation between specific application domains.
-4.  **L4 (DEK)**: Ephemeral Data Encryption Key used for per-record encryption, generated at the Gateway and often managed by the client.
-
-
 ![high-level-architecture.png](.images/high-level-architecture.png)
+
+### The Governance Control Plane (The Brain)
+The Governance layer defines **Intent** and **Sovereignty** without ever possessing the raw key material. It is structurally divided into two autonomous components:
+
+#### CMK Registry: The Identity Authority
+The Registry is the "Phonebook" of the platform. It manages the lifecycle of the Tenant itself.
+* **Tenant Lifecycle:** Orchestrates the **Onboarding** (Create) and **Offboarding** (Delete) of tenants.
+* **Lifecycle Triggers:** It sends the `Tenant.Create` or `Tenant.Delete` signals to the Krypton Core via **Orbital**, instructing the Core to initialize or purge the necessary L2/L3 cryptographic structures.
+* **Region Scope:** Defines *where* a tenant exists (e.g., "Tenant A is active in EU-Central-1"), ensuring the Core only loads tenants authorized for that region.
+
+#### CMK Server: The Sovereign Anchor
+The CMK Server is the "Vault Interface." It is the bridge to the Customer's external trust anchor.
+* **L1 Pointer Management:** Stores the **Shadow Reference** (ARN/URL) to the customer's External L1 Key (e.g., AWS KMS, Azure KV). It does *not* hold the key, only the pointer.
+* **Sovereign Linkage:** Pushes the **L1 Pointer** and **Link/Unlink** events to the Krypton Core via **Orbital**.
+* **The Kill-Switch (Revocation):** When a customer revokes access, the CMK Server broadcasts a high-priority `L1.Revoke` event, forcing the Core to immediately drop the L2 key from memory.
+
+### The Execution Plane (The Muscle)
+The Execution layer handles the "operational reality" of cryptography. It is designed for zero-latency performance and autonomous security maintenance.
+
+#### Krypton Core: The Regional Authority
+The **Krypton Core** is the "Sovereign Hub" deployed per region. It is the sole authority for **Key Generation** and **Rotation**.
+* **Sovereign Binding:** It uses the L1 Pointer (from CMK Server) to authenticate with the External Provider (via Plugins) and unseal the L2 Tenant Key.
+* **Autonomous Lifecycle (L2/L3):**
+  * **Creation:** Upon receiving a "Create" signal from the Registry, it generates the cryptographically strong L2/L3 key material.
+  * **Rotation:** It owns the internal scheduler and executes **Key Rotation** for L2 and L3 keys autonomously, ensuring keys are always fresh without requiring instructions from the Control Plane.
+* **Gateway Sealing:** It acts as the upstream root for the Krypton Gateways, securely delivering unwrapped L3 Service Keys to authorized nodes.
+
+#### Krypton Gateway: The Edge Interface
+The **Krypton Gateway** is the "High-Speed Switch" deployed close to the workload.
+* **L4 DEK Factory:** Exclusively handles the generation, retrieval, and destruction of ephemeral **L4 Data Encryption Keys**.
+* **Local Persistence:** Uses a **Pluggable Internal Vault** to cache L4 keys locally, ensuring that data plane operations (Encrypt/Decrypt) succeed even if the Core is temporarily unreachable.
+* **KMIP Translation:** Exposes a standardized **KMIP** interface to applications.
+
+## The Sovereignty Engine: Recursive Unsealing & Key Hierarchy
+OpenKCM enforces security through a tiered key hierarchy where each layer is mathematically bound to the one above it.
+
+* **L1 (External Root)**: Customer-owned (AWS/Azure/HSM). OpenKCM holds only a Reference (ARN).
+* **L2 (Tenant Root)**: Intermediate key providing mathematical isolation. Unsealed only by the L1.
+* **L3 (Service KEK)**: Isolates specific domains (e.g., "Payments," "Logs").
+* **L4 (Data DEK)**: Ephemeral key for per-record encryption. Generated at the Gateway, wrapped by L3.
 
 ## Strategic Advantages
 
 | Advantage | Business Meaning | Technical Enabler |
 | :--- | :--- | :--- |
-| **Market Expansion** | Opens Gov, Finance, Defense, Healthcare, etc. | **L1 Root Control** (BYOK/HYOK) |
-| **Liability Shift** | No plaintext root keys → breach firewall | **Shadow Key Pattern** (Zero-Knowledge DB) |
-| **Pricing Leverage** | Revocation as Platinum tier | **Sovereign Kill-Switch** |
-| **Competitive Moat** | True cryptographic isolation | **Schema-per-Tenant** Architecture |
-| **Compliance Speed** | End-to-end traceability | **Sovereign Audit**  |
+| **Market Expansion** | Opens Gov, Finance, Defense deals. | **L1 Root Control** (BYOK/HYOK) |
+| **Liability Shift** | No plaintext root keys = Breaches are firewalled. | **Shadow Key Pattern** (Zero-Knowledge) |
+| **Pricing Leverage** | Sell "Sovereign Revocation" as a Platinum Tier. | **Sovereign Kill-Switch** |
+| **Competitive Moat** | True cryptographic isolation per tenant. | **Schema-per-Tenant** Architecture |
+| **Compliance Speed** | Instant, non-repudiable audit trails. | **Sovereign Audit** (Correlation IDs) |
 
-## CMK Layer: Governance Capabilities
-The CMK Layer is the **trust firewall** that allows enterprises to adopt SaaS with the same confidence as on-premise solutions.
+## Operational Capabilities
 
-* **Self-Service Onboarding**: Enterprises import keys or create them in their own cloud accounts without manual provider involvement.
-* **Tenant-to-Key Mapping**: Securely binds tenant IDs to customer-specific KMS references (ARNs, URIs) within dedicated **Tenant Schemas**.
-* **OpenKCM Plugin Architecture**: Unified interface for **Identity** (OIDC/SPIFFE), **Keystore** (AWS/Azure/Vault), **SystemInfo**, and **Notification** plugins.
-* **Revocation Kill-Switch**: Customer-initiated revocation instantly renders all tenant data inaccessible globally.
+### CMK Layer: The Trust Firewall
+The CMK Server acts as the centralized trust broker, ensuring that every interaction is authenticated, authorized, and physically isolated before it ever reaches the cryptographic engine.
 
-## The Crypto Layer: Operational Excellence
-The Crypto Layer handles the "operational reality" of security—ensuring that billions of operations per day do not degrade the user experience.
+* **Self-Service Sovereign Onboarding**: Enterprises can autonomously link their external trust anchors (AWS KMS, Azure Key Vault, or On-Prem HSMs) via the **CMK Server**. This "Bring Your Own Key" (BYOK) and "Hold Your Own Key" (HYOK) workflow validates ownership without ever exposing the raw key material to the SaaS provider.
+* **Strict Schema-Based Isolation**: The **CMK Server** enforces a hard multi-tenancy model by interacting exclusively with dedicated per-tenant schemas. This guarantees that tenant metadata and policy configurations are cryptographically and logically segregated at the persistence layer, eliminating the risk of cross-tenant data leakage.
+* **Instant Global Revocation**: The **CMK Server** provides a "Sovereign Kill-Switch." When a customer initiates a revocation, the server broadcasts a high-priority `L1.Revoke` event via Orbital. This instantly severs the link between the external root and the internal execution plane, rendering all data undecryptable globally within milliseconds.
 
-### OpenKCM Crypto (Krypton)
-* **MasterKey Protection**: Reconstructs the internal MasterKey via Shamir Secret Sharing (SSS) or Seal auto-unseal into secure memory only.
-* **Lifecycle Automation**: Handles rotation, versioning, and archiving of L2/L3 keys.
-* **Root of Trust Bootstrap**: Initializes via the **Keystore Plugin**, loading the necessary credentials to unseal the L2 keys from the Shadow References.
-* **High-Performance KMIP**: Performs high-speed Wrap/Unwrap operations for **L4 DEKs (Data Encryption Key)** against the **L3 KEK (Key Encryption Key)**.
+### Crypto Layer: The Performance Engine
+The Crypto layer is engineered for high-velocity, zero-latency operations, ensuring that strict security requirements never become a bottleneck for application performance.
 
-### OpenKCM Crypto (Krypton) Gateway
-* **Dedicated Gateway Service**: Deployed as a standalone service close to workloads, managing high-throughput operations.
-* **Local Persistence & Caching**: Independently handles `Create` and `Get` operations for **L4 DEKs**, securely storing them in a local gateway vault to ensure resilience and performance.
-* **KMIP/mTLS**: All communication uses standardized KMIP over mandatory mutual TLS.
+* **Advanced Secret Protection**: The **Krypton Core** utilizes **Shamir Secret Sharing (SSS)** to split its master sealing key among multiple operators or secure hardware enclaves. This "Glass Break" protocol ensures that no single administrator or compromised process can ever reconstruct the core's identity or access the raw key memory.
+* **Autonomous Zero-Touch Maintenance**: The **Krypton Core** features a fully autonomous internal scheduler that manages the entire lifecycle of L2 and L3 keys. It executes rotation, versioning, and re-wrapping operations in the background without requiring manual intervention or upstream commands, ensuring keys remain cryptographically fresh without service interruption.
+* **Resilient Edge Operations**: The **Krypton Gateway** decouples availability from connectivity. By utilizing a **Pluggable Internal Vault** (e.g., in-memory Redis, Encrypted SQLite), it caches active L3 service keys and locally persists L4 data keys. This allows the data plane to continue encryption and decryption operations with 100% availability, even during total control plane outages.
 
 ## Strategic Outcome
 **How Governance (CMK) & Operations (Crypto) Drive Enterprise Value**
 
-| Strategic Dimension | CMK Service (Governance) | Crypto Service (Operations)                         | Combined Impact |
-| :--- | :--- |:----------------------------------------------------| :--- |
-| **Market Access** | Unlocks regulated verticals via root-key control. | Enables high-throughput for real-time platforms.    | Opens high-ACV deals previously blocked by sovereignty concerns. |
-| **Trust & Retention** | Mathematically enforced revocation. | Zero-trust multi-tenancy (no cross-tenant leakage). | Reduces churn in regulated segments; customers stay longer. |
-
+| Strategic Dimension | CMK (Registry & Server) | Crypto (Core & Gateway) | Combined Impact |
+| :--- | :--- | :--- | :--- |
+| **Market Access** | Unlocks regulated verticals via root-key control. | Enables high-throughput for real-time platforms. | **Opens high-ACV deals** previously blocked by sovereignty concerns. |
+| **Trust & Retention** | Mathematically enforced revocation. | Zero-trust multi-tenancy (no cross-tenant leakage). | **Reduces churn** in regulated segments; customers stay longer. |
 
 ## Summary
 This document establishes OpenKCM as the **Strategic Growth Catalyst** for the modern sovereign-cloud era. By transforming security from a passive compliance cost into an active market differentiator, it empowers SaaS providers to:
 
-* **Secure High-Value Enterprise Contracts** by satisfying the most stringent global data sovereignty and residency requirements.
-* **Enhance Tiered Monetization** by positioning advanced cryptographic isolation and root-key control as premium, high-margin capabilities.
-* **Minimize Operational Liability** by ensuring the provider never possesses plaintext root-key material (via the **Shadow Key Pattern**), shifting ultimate access control to the customer.
+* **Secure High-Value Enterprise Contracts** by satisfying the most stringent global data sovereignty requirements.
+* **Enhance Tiered Monetization** by positioning advanced cryptographic isolation as a premium capability.
+* **Minimize Operational Liability** by ensuring the provider never possesses plaintext root-key material (via the **Shadow Key Pattern**).
 * **Eliminate Performance Bottlenecks** through a decentralized, gateway-native cryptographic model designed for sub-millisecond global execution.
