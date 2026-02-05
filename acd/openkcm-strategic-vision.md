@@ -15,19 +15,20 @@ To achieve absolute sovereignty without performance degradation, OpenKCM enforce
 ![high-level-architecture.png](.images/high-level-architecture.png)
 
 ### The Governance Control Plane (The Brain)
-The Governance layer defines **Intent** and **Sovereignty** without ever possessing the raw key material. It is structurally divided into two autonomous components:
+The Governance layer acts as the **source of intent**. It defines strict boundaries for **Identity** (Who) and **Sovereignty** (How), ensuring that policy is mathematically separated from the raw key material used in execution. It is structurally divided into two autonomous components:
 
 #### CMK Registry: The Identity Authority
-The Registry is the "Phonebook" of the platform. It manages the lifecycle of the Tenant itself.
-* **Tenant Lifecycle:** Orchestrates the **Onboarding** (Create) and **Offboarding** (Delete) of tenants.
-* **Lifecycle Triggers:** It sends the `Tenant.Create` or `Tenant.Delete` signals to the Krypton Core via **Orbital**, instructing the Core to initialize or purge the necessary L2/L3 cryptographic structures.
-* **Region Scope:** Defines *where* a tenant exists (e.g., "Tenant A is active in EU-Central-1"), ensuring the Core only loads tenants authorized for that region.
+The Registry functions as the **Global Directory** and "Phonebook" of the platform. It is the single source of truth for the existence of a Tenant.
+* **Tenant Lifecycle:** It is the master record for **Onboarding** (Provisioning) and **Offboarding** (Deprovisioning). No cryptographic entity can exist in the system without a valid Registry entry.
+* **Lifecycle Triggers:** It drives the initialization of the data plane by emitting `Tenant.Create` or `Tenant.Delete` signals via **Orbital**. These signals instruct the Krypton Core to allocate or purge the secure memory structures required for L2/L3 keys.
+* **Region Scope:** It enforces **Data Residency** by defining the specific geographical regions where a tenant is authorized to operate. The Krypton Core uses this scope to reject operations outside of the customer's legal jurisdiction.
 
 #### CMK Server: The Sovereign Anchor
-The CMK Server is the "Vault Interface." It is the bridge to the Customer's external trust anchor.
-* **L1 Pointer Management:** Stores the **Shadow Reference** (ARN/URL) to the customer's External L1 Key (e.g., AWS KMS, Azure KV). It does *not* hold the key, only the pointer.
-* **Sovereign Linkage:** Pushes the **L1 Pointer** and **Link/Unlink** events to the Krypton Core via **Orbital**.
-* **The Kill-Switch (Revocation):** When a customer revokes access, the CMK Server broadcasts a high-priority `L1.Revoke` event, forcing the Core to immediately drop the L2 key from memory.
+The CMK Server functions as the **Trust Broker** and "Vault Interface." It is the only component capable of bridging the internal system to the Customer's external Root of Trust.
+* **L1 Pointer Management:** It securely stores the **Shadow Reference** (ARN, URL, or Resource ID) to the customer's External L1 Key (e.g., AWS KMS, Azure Key Vault). Crucially, it stores *only* the pointer, never the key itself.
+* **Sovereign Linkage:** It is responsible for pushing the **L1 Pointer** and the **Link/Unlink** status events to the Krypton Core via **Orbital**, effectively "unlocking" the region for business.
+* **The Kill-Switch (Revocation):** It provides the ultimate sovereignty control. When a customer initiates a revocation, the CMK Server broadcasts a high-priority `L1.Revoke` event. This forces the Krypton Core to immediately drop the L2 Tenant Key from memory, rendering all data indecipherable instantly.
+
 
 ### The Execution Plane (The Muscle)
 The Execution layer handles the "operational reality" of cryptography. It is designed for zero-latency performance and autonomous security maintenance.
