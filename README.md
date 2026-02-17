@@ -6,9 +6,14 @@
 
 *Insert a short description of your project here...*
 
-## Requirements and Setup
 
-*Insert a short description what is required to get your project running...*
+## Where to Start
+
+To try out the CMK Layer, visit and follow the instructions at:
+👉 [CMK Layer GitHub Repository](https://github.com/openkcm/cmk)
+
+Krypton Layer is currently in progress. You can track its development and see the active epics here:
+👉 [Krypton GitHub Project Board](https://github.com/openkcm/krypton/issues?q=is%3Aissue+is%3Aopen+label%3AEpic)
 
 ## Support, Feedback, Contributing
 
