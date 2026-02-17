@@ -4,7 +4,7 @@
 
 ## About this project
 
-*Insert a short description of your project here...*
+OpenKCM is an open-source Key and Crypto Management solution designed to provide secure, scalable, and flexible key management for cloud-native and enterprise environments. It enables integration with various key management backends, supports multi-tenancy, and offers extensible APIs for cryptographic operations and lifecycle management.
 
 
 ## Where to Start
@@ -12,7 +12,7 @@
 To try out the CMK Layer, visit and follow the instructions at:
 👉 [CMK Layer GitHub Repository](https://github.com/openkcm/cmk)
 
-Krypton Layer is currently in progress. You can track its development and see the active epics here:
+Krypton Layer is currently in active progress. You can track its development and see the active epics here:
 👉 [Krypton GitHub Project Board](https://github.com/openkcm/krypton/issues?q=is%3Aissue+is%3Aopen+label%3AEpic)
 
 ## Support, Feedback, Contributing
