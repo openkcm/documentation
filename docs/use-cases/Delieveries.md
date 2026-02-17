@@ -70,7 +70,7 @@ Crypto KMIP Server
 5. **MongoDB encrypts collection** transparently
 6. **No external dependencies** - fully self-contained
 
-### Crypto Core Features:
+### Crypto (Krypton) Features:
 - **KMIP Protocol Server** - Handle MongoDB key requests
 - **Autonomous Key Generation** - Create AES-256 keys for database encryption
 - **Tenant Database** - Simple tenant → keys mapping storage
