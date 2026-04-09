@@ -18,7 +18,7 @@ Every cloud KMS has a proprietary REST API. If you integrate your application wi
 
 ### 2. Encryption Is Too Slow to Use Everywhere
 
-Traditional KMS solutions require a network call for every encrypt/decrypt operation — 20 to 200ms round-trip. At scale (millions of operations per second), this makes encrypting 100% of data at rest impractical. Most organizations compromise by encrypting only "sensitive" fields, leaving the rest exposed.
+Traditional KMS solutions route every encrypt/decrypt operation through a centralized service — often in a different availability zone or region. The issue is not the network call itself (any external KMS requires one), but **where** that call goes: a remote, shared KMS endpoint that adds 20–200ms of round-trip latency per operation. At scale (millions of operations per second), these upstream round-trips to the central KMS make encrypting 100% of data at rest impractical. Most organizations compromise by encrypting only "sensitive" fields, leaving the rest exposed.
 
 ### 3. Key Hierarchies Are Rigid
 
@@ -60,18 +60,18 @@ Krypton speaks KMIP (Key Management Interoperability Protocol), the OASIS intern
 
 #### 2. Encrypt Everything — No Performance Tax
 
-Krypton's **Split-Execution Architecture** separates key operations into two components:
+Krypton's **Split-Execution Architecture** brings crypto operations close to where they are needed, eliminating costly upstream round-trips to a centralized KMS:
 
 - **Krypton Core** (regional): Holds L2/L3 keys in secure memory. Performs wrapping and unwrapping. Connects to the customer's external L1 key.
-- **Krypton Gateway** (edge, sidecar): Runs next to the application. Handles L4 Data Encryption Key operations locally in sub-millisecond time.
+- **Krypton Gateway** (edge, sidecar): Runs as a local sidecar next to the application. The application still makes a network call to the Gateway (e.g., MongoDB → TCP/KMIP → Gateway), but that call stays **local** — same node or same pod — instead of traversing to a remote, centralized KMS. L4 Data Encryption Key operations are handled at the edge in sub-millisecond time, and upstream calls to Krypton Core only happen when a new L4 key needs to be created or an L3 key needs to be unwrapped — not on every encrypt/decrypt.
 
-| Operation    | Krypton            | AWS KMS           | HashiCorp Vault    |
-| ------------ | ------------------ | ----------------- | ------------------ |
-| Create DEK   | **<0.5ms** (local) | 20-50ms (network) | 50-200ms (network) |
-| Encrypt data | **<0.5ms** (local) | 20-50ms (network) | 50-200ms (network) |
-| Decrypt data | **<1ms** (cached)  | 20-50ms (network) | 50-200ms (network) |
+| Operation    | Krypton                   | AWS KMS                      | HashiCorp Vault               |
+| ------------ | ------------------------- | ---------------------------- | ----------------------------- |
+| Create DEK   | **<0.5ms** (local edge)   | 20-50ms (remote centralized) | 50-200ms (remote centralized) |
+| Encrypt data | **<0.5ms** (local edge)   | 20-50ms (remote centralized) | 50-200ms (remote centralized) |
+| Decrypt data | **<1ms** (cached at edge) | 20-50ms (remote centralized) | 50-200ms (remote centralized) |
 
-> _"Encrypt 100% of your data at rest with sub-millisecond overhead. No performance compromises. No excuses not to encrypt."_
+> _"The network call still exists — but it stays local. The Gateway brings crypto to the edge, so your application talks to a sidecar, not a remote KMS. Upstream calls are reduced to key lifecycle events, not every encrypt/decrypt. The result: sub-millisecond overhead, encrypt everything."_
 
 #### 3. Your Keys, Your Rules — Mathematically Guaranteed
 
