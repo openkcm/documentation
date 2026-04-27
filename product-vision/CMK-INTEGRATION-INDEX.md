@@ -10,6 +10,7 @@
 
 | Document | Purpose | Audience | Read Time |
 | :--- | :--- | :--- | :--- |
+| [Encryption Scenarios: Platform-Managed vs. Customer-Managed](openkcm-key-management-scenarios.md) | Two scenarios for L1 key ownership — what customers get with platform encryption vs. BYOK/HYOK, and where the CMK controller scope begins | Product, Engineering, Customer-facing teams | 5 min |
 | [Internal Review Argument](cmk-integration-internal-review.md) | Full technical argument for architect and tech lead review — grounded in ApeiroRA requirements and Platform Mesh docs | Architecture team, Tech Lead | 15 min |
 | [Platform Mesh Alignment Proposal](cmk-integration-platform-mesh-alignment.md) | PR document for Platform Mesh team — explains CMK, the proposal, and the 6 questions we need answered | Platform Mesh team, Mirza | 15 min |
 | [Architecture Argument](cmk-integration-argument.md) | Why we are consolidating the CMK layer into Platform Mesh — structured argument covering duplication, integration cost, and platform alignment | Management, Leadership | 10 min |
