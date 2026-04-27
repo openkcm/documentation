@@ -9,7 +9,7 @@
 
 ## Why This Document Exists
 
-Following our sync with the showroom team on Igor's development (UI and controller for OpenKCM), we observed that Platform Mesh natively provides capabilities that the CMK service was built to deliver. This document proposes eliminating the CMK layer as a standalone service and moving key governance natively into Platform Mesh.
+Following our sync with the showroom team on Igor's development (UI and controller for OpenKCM), we observed that Platform Mesh natively provides capabilities that the CMK service was built to deliver. This document proposes consolidating the CMK layer into Platform Mesh as a native service, moving key governance natively into Platform Mesh.
 
 This is a product vision proposal. We are opening it as a PR to get alignment from the Platform Mesh team before committing to implementation.
 
@@ -51,7 +51,7 @@ This means the showroom work is not just a demo — it is a proof that the entir
 
 ## The Proposal
 
-**Eliminate the standalone CMK service. Move L1 key governance into Platform Mesh as a native controller (CMK-as-Controller).**
+**Consolidate the standalone CMK service into Platform Mesh as a native controller (CMK-as-Controller).**
 
 ### What this looks like
 

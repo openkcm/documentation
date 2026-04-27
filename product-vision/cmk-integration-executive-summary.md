@@ -1,7 +1,7 @@
-# CMK Elimination: Executive Summary
+# CMK Integration: Executive Summary
 
 **Date:** 2026-04-22
-**Decision:** Eliminate legacy CMK service entirely
+**Decision:** Consolidate legacy CMK service into Platform Mesh as CMK-as-Controller
 **Replacement:** CMK-as-Controller (Platform Mesh native)
 
 ---
@@ -74,7 +74,7 @@ Done (all state in Kubernetes)
 
 ---
 
-## What Gets Eliminated
+## What Transitions into Platform Mesh
 
 | Component                 | Reason                                   |
 | :------------------------ | :--------------------------------------- |
@@ -197,7 +197,7 @@ kubectl get l1keyrevocation acme-corp-revoke -o jsonpath='{.status}'
 | CMK Registry DB                       | $2K-5K            | REMOVE          |
 | CMK Audit DB                          | $2K-5K            | REMOVE          |
 | CMK Services (task scheduler/workers) | $4K-9K            | REMOVE          |
-| **Total Removed**                     | **$13K-29K**      | **ELIMINATE**   |
+| **Total Removed**                     | **$13K-29K**      | **CONSOLIDATE** |
 | CMK Controller (new)                  | $0.5K-1K          | ADD             |
 | **Net Savings**                       | **$12K-28K/year** | **REDUCE COST** |
 
@@ -236,7 +236,7 @@ Plus: **Reduced operational overhead** (no separate database operations, monitor
 
 ## Key Design Decisions
 
-### Decision 1: Eliminate CMK Entirely
+### Decision 1: Consolidate CMK into Platform Mesh
 
 Instead of "CMK v2" (audit-only), build CMK-as-Controller (fully operational).
 

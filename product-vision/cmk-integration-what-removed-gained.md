@@ -1,4 +1,4 @@
-# CMK Elimination: What's Removed, What's Gained
+# CMK Integration: What's Removed, What's Gained
 
 ---
 

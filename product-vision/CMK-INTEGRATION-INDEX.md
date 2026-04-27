@@ -12,8 +12,8 @@
 | :--- | :--- | :--- | :--- |
 | [Internal Review Argument](cmk-integration-internal-review.md) | Full technical argument for architect and tech lead review — grounded in ApeiroRA requirements and Platform Mesh docs | Architecture team, Tech Lead | 15 min |
 | [Platform Mesh Alignment Proposal](cmk-integration-platform-mesh-alignment.md) | PR document for Platform Mesh team — explains CMK, the proposal, and the 6 questions we need answered | Platform Mesh team, Mirza | 15 min |
-| [Architecture Argument](cmk-integration-argument.md) | Why we are eliminating the CMK layer — structured argument covering duplication, integration cost, and platform alignment | Management, Leadership | 10 min |
-| [Executive Summary](cmk-integration-executive-summary.md) | What changes, what gets eliminated, cost impact, and high-level timeline | Leadership, Product | 5 min |
+| [Architecture Argument](cmk-integration-argument.md) | Why we are consolidating the CMK layer into Platform Mesh — structured argument covering duplication, integration cost, and platform alignment | Management, Leadership | 10 min |
+| [Executive Summary](cmk-integration-executive-summary.md) | What changes, what transitions into Platform Mesh, cost impact, and high-level timeline | Leadership, Product | 5 min |
 | [What's Removed, What's Gained](cmk-integration-what-removed-gained.md) | Before/after comparison of the architecture | Product, Engineering leads | 15 min |
 | [ADR-105: CMK-as-Controller](../adr/cmk-as-controller-platform-mesh-native.md) | The architecture decision record — owned by engineering | Architects, Engineers | 20 min |
 
@@ -29,7 +29,7 @@ The standalone CMK service duplicates capabilities that Platform Mesh already pr
 
 | Decision | Chosen path | Why |
 | :--- | :--- | :--- |
-| Full elimination vs. CMK v2 (audit-only) | Full elimination | CMK v2 still required its own database and sync logic — not simpler enough |
+| Full consolidation vs. CMK v2 (audit-only) | Full consolidation | CMK v2 still required its own database and sync logic — not simpler enough |
 | Where governance lives | Platform Mesh ApprovalPolicy | Already exists, reusable, declarative, with integrated audit trail |
 | Where L1 validation lives | Krypton | Krypton holds all backend libraries (AWS, GCP, Azure, HSM); keeps crypto at the crypto layer |
 | Source of truth | Kubernetes CRDs | Single source of truth, GitOps-native, no separate database |

@@ -1,7 +1,7 @@
-# CMK Layer Elimination: Architecture Argument
+# CMK Layer Consolidation: Architecture Argument
 
 **Date:** 2026-04-24
-**Purpose:** Structured argument for eliminating the standalone CMK service in favour of CMK-as-Controller (Platform Mesh native)
+**Purpose:** Structured argument for consolidating the standalone CMK service into Platform Mesh as CMK-as-Controller (Platform Mesh native)
 **Related:** [CMK Integration Index](CMK-INTEGRATION-INDEX.md) · [ADR-105](../adr/cmk-as-controller-platform-mesh-native.md) · [Executive Summary](cmk-integration-executive-summary.md)
 
 ---
@@ -34,7 +34,7 @@ CMK sits awkwardly between these layers today, owning nothing cleanly and duplic
 
 ## Argument 3: Completing the CMK Integration Would Make Things Worse, Not Better
 
-This is the point that makes elimination the only rational path. CMK is not currently integrated with Platform Mesh — and finishing that integration would require work that proves our own argument against it.
+This is the point that makes consolidation into Platform Mesh the only rational path. CMK is not currently integrated with Platform Mesh — and finishing that integration would require work that proves our own argument against it.
 
 The showroom team built the most advanced integration attempt to date (`showroom-msp-openkcm`). What they produced makes the integration gap explicit:
 
@@ -59,7 +59,7 @@ The CRD types (`Tenant`, `L1KeyReference`), the reconciliation loop structure, a
 
 ## Argument 5: Concrete Cost — 8 Services to 1 Controller
 
-### What is eliminated
+### What transitions into Platform Mesh
 
 | Component | Replaced by |
 |---|---|
@@ -93,7 +93,7 @@ Additional savings: engineering time that would have gone into the Luigi integra
 | "What CMK features would we lose?" | Every CMK feature is covered: approval by ApprovalPolicy, audit by Platform Mesh trail, RBAC by Kubernetes native. Nothing is lost. |
 | "Is this risky given the showroom work?" | The showroom talks to a mock API — there is no live traffic to migrate. We are replacing an incomplete integration before it ships, not after. |
 | "Why not just finish the Luigi integration?" | We would be building a portal wrapper for capabilities the portal already has. That is the definition of redundant work. |
-| "Why not CMK v2, audit-only?" | An audit-only CMK still requires its own database and sync logic. Full elimination via the controller is simpler than a slimmed-down version. We evaluated this — see [ADR CMK v2](../adr/cmk-v2-lean-audit-compliance-layer.md). |
+| "Why not CMK v2, audit-only?" | An audit-only CMK still requires its own database and sync logic. Full consolidation via the controller is simpler than a slimmed-down version. We evaluated this — see [ADR CMK v2](../adr/cmk-v2-lean-audit-compliance-layer.md). |
 
 ---
 
@@ -111,4 +111,4 @@ Additional savings: engineering time that would have gone into the Luigi integra
 | GitOps support | No | Yes |
 | Annual cost | $13K–29K | $0.5K–1K |
 
-Eliminating CMK produces a leaner, more maintainable architecture where every layer owns exactly one responsibility, governance is native to the platform, and the engineering investment goes into shipping rather than duplicating what already exists.
+Consolidating CMK into Platform Mesh produces a leaner, more maintainable architecture where every layer owns exactly one responsibility, governance is native to the platform, and the engineering investment goes into shipping rather than duplicating what already exists.

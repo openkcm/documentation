@@ -163,15 +163,15 @@ The kill switch bypasses the grace period entirely. An explicit, approved revoca
 - Accidental unlink → Suspended → notification → grace period → remediation possible
 - Deliberate revocation → Deactivated/Destroyed → immediate → no reversal
 
-Krypton already supports both enforcement modes today. Eliminating CMK does not remove or weaken either capability. The controller replaces CMK's policy storage. Krypton's enforcement is unchanged.
+Krypton already supports both enforcement modes today. Consolidating CMK into Platform Mesh does not remove or weaken either capability. The controller replaces CMK's policy storage. Krypton's enforcement is unchanged.
 
 ---
 
-## What Gets Eliminated and Why Each Is Safe to Remove
+## What Transitions into Platform Mesh and Why Each Is Safe to Move
 
 **CMK API Server (REST/gRPC)** — replaced by Kubernetes API. All Platform Mesh services use KRM. There is no functional loss; it is a delivery mechanism change mandated by the Platform Mesh guiding principles: *"The API design is solely dedicated to a declarative model, with no support for imperative requests."* A custom REST API is architecturally inconsistent with Platform Mesh.
 
-**CMK Registry Database (PostgreSQL)** — replaced by Tenant CRD in etcd. The Platform Mesh account model uses etcd as the source of truth for all service state. Keeping a separate PostgreSQL registry creates the dual-write problem: two sources of truth that must stay in sync. Eliminating it removes an entire class of consistency bugs.
+**CMK Registry Database (PostgreSQL)** — replaced by Tenant CRD in etcd. The Platform Mesh account model uses etcd as the source of truth for all service state. Keeping a separate PostgreSQL registry creates the dual-write problem: two sources of truth that must stay in sync. Transitioning it removes an entire class of consistency bugs.
 
 **CMK Approval Engine** — replaced by Platform Mesh approval mechanism. The Four-Eyes Principle semantics are preserved. The implementation moves from custom code to a platform-native feature that is reusable across all governance operations.
 
@@ -181,7 +181,7 @@ Krypton already supports both enforcement modes today. Eliminating CMK does not 
 
 **CMK Sovereign Portal (standalone)** — replaced by Platform Mesh portal via Luigi. REQ-005 requires the OpenKCM UI to be accessible through the user's account. The Platform Mesh portal already fulfills this. A standalone portal requires users to context-switch out of Platform Mesh to manage their keys — the opposite of what REQ-001 through REQ-006 describe.
 
-**CMK UI → Luigi integration work** — this work was never completed. The showroom proves it is needed (the UI fails without Luigi context). Eliminating CMK as a standalone service means this work is no longer required — the UI becomes a native Platform Mesh micro-frontend from the start.
+**CMK UI → Luigi integration work** — this work was never completed. The showroom proves it is needed (the UI fails without Luigi context). Consolidating CMK as a Platform Mesh native service means this work is no longer required — the UI becomes a native Platform Mesh micro-frontend from the start.
 
 ---
 
