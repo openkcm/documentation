@@ -5,7 +5,7 @@ status: Draft
 last_updated: 2026-04-27
 ---
 
-# OpenKCM Encryption Scenarios: Platform-Managed vs. Customer-Managed Keys
+# OpenKCM Key Management Scenarios: Platform-Managed vs. Customer-Managed Keys
 
 ## Overview
 
