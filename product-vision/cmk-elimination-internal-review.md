@@ -1,4 +1,4 @@
-# OpenKCM CMK Layer Elimination: Technical Argument for Review
+# OpenKCM CMK Service: Platform Mesh Integration Proposal
 
 **Date:** 2026-04-24
 **Author:** Aysan
@@ -10,7 +10,7 @@
 
 ## Purpose
 
-This document makes the case for eliminating the standalone CMK service and moving key governance natively into Platform Mesh. It is written for internal architecture review before opening a PR to the Platform Mesh team and before presenting to ApeiroRA security architect and requirements owner.
+This document makes the case for postponing the standalone CMK service and moving key governance natively into Platform Mesh. It is written for internal architecture review before opening a PR to the Platform Mesh team and before presenting to ApeiroRA security architect and requirements owner.
 
 The argument is built from three sources: the ApeiroRA requirements epic, the Platform Mesh architecture documentation, and the showroom implementation evidence.
 
@@ -27,34 +27,34 @@ And the functional requirements are explicit:
 > *REQ-001: System must automatically detect new tenant/account creation in KCP*
 > *REQ-002: Platform Mesh must trigger OpenKCM CMK Service provisioning without user intervention*
 
-This is not a vague integration requirement. It mandates that Platform Mesh account creation IS the trigger for OpenKCM provisioning. A standalone CMK service structurally cannot fulfill this — it would always require a polling mechanism or a custom event bridge sitting between Platform Mesh and CMK. A Kubernetes controller watching account CRDs fulfills it exactly, with no bridge required.
+This is not a vague integration requirement. It mandates that Platform Mesh account creation IS the trigger for OpenKCM provisioning. A standalone CMK service structurally cannot fulfill this — it would always require a custom event bridge sitting between Platform Mesh and CMK. A Kubernetes controller watching account CRDs fulfills it exactly, with no bridge required. Neither CMK nor Krypton poll Platform Mesh — both are independent services. Platform Mesh pushes account creation events; the controller reacts to them.
 
 Furthermore, the Platform Mesh account model documentation explicitly names OpenKCM as the key management layer for Platform Mesh accounts:
 
 > *"The platform provides comprehensive key management capabilities for accounts, leveraging OpenKCM (Key Chain Management) to offer flexible and robust data protection."*
 
-OpenKCM is not described as a service that integrates with Platform Mesh from the outside. It is described as part of the Platform Mesh account model. The requirements and the Platform Mesh architecture documentation are already aligned on this. Our current standalone CMK architecture is the anomaly.
+OpenKCM is not described as a service that integrates with Platform Mesh from the outside. It is described as part of the Platform Mesh account model. The requirements and the Platform Mesh architecture documentation are already aligned on this. Our current standalone CMK architecture is the anomaly — it is a standalone service where the requirements and Platform Mesh docs both describe a native component.
 
 ---
 
 ## What CMK Does Today and Why It Is Redundant
 
-CMK is OpenKCM's governance layer — the "brain" that controls who can access what and under what conditions, without ever touching key material. It owns:
+CMK is OpenKCM's governance service — it controls who can access what and under what conditions, without ever touching key material. It owns:
 
 - Tenant registry (who exists, what they are subscribed to)
-- L1 key governance (BYOK/HYOK — storing references to customer-managed external keys)
+- L1 key governance (BYOK/HYOK — storing references to customer-managed external keys; CMK does not provide or host the L1 keystore itself — that is the customer's HSM, AWS KMS, GCP KMS, Azure Key Vault, or Vault)
 - Kill switch (instant global revocation via Orbital)
 - Multi-party approval (Four-Eyes Principle for L1 linking and revocation)
 - RBAC (L1-scoped permissions, cross-tenant isolation)
 - Audit trail (tamper-evident compliance record for SOC2, TISAX, GDPR)
-- Sovereign Portal UI (human interface for the above)
+- Standalone Portal UI (human interface for the above — a separate web application that lives outside the Platform Mesh UI framework and requires its own Luigi integration to be usable within the platform portal)
 
 Platform Mesh natively provides every one of these:
 
 | CMK Capability | Platform Mesh Native Equivalent |
 | :--- | :--- |
 | Tenant registry | Kubernetes CRDs + etcd — declarative, versioned, GitOps-native |
-| Approval workflows (Four-Eyes) | ApprovalPolicy CRD — declarative multi-party approval |
+| Approval workflows (Four-Eyes) | Platform Mesh approval mechanism — declarative multi-party approval |
 | RBAC | Kubernetes RBAC + workspace isolation — instance-scoped permissions |
 | Audit trail | Immutable Platform Mesh event system — richer than a PostgreSQL table |
 | Portal UI | Luigi framework — same portal all Platform Mesh services use |
@@ -89,7 +89,7 @@ When a tenant enables OpenKCM, the platform automatically provisions a platform-
 
 This model resolves two concerns raised during review:
 
-**The chain enforcement concern (team lead):** The key chain is always complete. Breaking it is always a deliberate act — an explicit `L1KeyRevocation` requiring Four-Eyes approval — never an accidental side effect of a misconfiguration. If the chain is intentionally broken, crypto stops. That is the point of the kill switch.
+**The chain enforcement concern (team lead):** The key chain is always complete. Breaking it is always a deliberate act — an explicit approved revocation request requiring Four-Eyes approval — never an accidental side effect of a misconfiguration. If the chain is intentionally broken, crypto stops. That is the point of the kill switch.
 
 **The operational safety concern (architect):** DEKs are always decrypt-able because an L1 is always present at the account level. A database volume cannot be accidentally bricked by a missing root key because there is no state where the root key is missing. The platform-managed L1 is the safety net; BYOK/HYOK is the upgrade path.
 
@@ -115,12 +115,55 @@ This is the most important section for the security review.
 | CMK never holds key material | ✅ | ✅ Preserved |
 | Krypton never stores policy | ✅ | ✅ Preserved |
 | L1 keys stay in customer KMS | ✅ | ✅ Preserved |
-| Kill switch via Orbital | ✅ | ✅ Preserved |
-| Four-Eyes on L1 operations | ✅ | ✅ Via ApprovalPolicy |
+| Kill switch | ✅ | ✅ Preserved |
+| Four-Eyes on L1 operations | ✅ | ✅ Preserved |
 | Audit trail for compliance | ✅ | ✅ Via Platform Mesh events |
 | BYOK/HYOK support | ✅ | ✅ Via L1KeyReference CRD |
 
-The propagation SLA from REQ-022 — configuration changes within 2 minutes globally — is well within what Orbital delivers. This is not a risk.
+The propagation SLA from REQ-022 — configuration changes within 2 minutes globally — is not a risk.
+
+---
+
+## Kill Switch and Key Lifecycle: No Compromise From Removing CMK
+
+A key concern in any CMK elimination discussion is whether the kill switch and key governance capabilities are weakened. They are not — because these capabilities live in Krypton, not in CMK.
+
+**CMK never enforced key states. Krypton did.**
+
+CMK stored the policy (who is suspended, who is revoked). Krypton enforced it (block encrypt, block decrypt). The controller stores the policy in exactly the same way. Krypton enforces it in exactly the same way. The execution layer does not change.
+
+### NIST Key Lifecycle
+
+OpenKCM manages keys according to the NIST key lifecycle. Every state transition is deliberate, approved, and auditable. Unlink is not a supported operation — suspension is the graceful equivalent.
+
+| State | Trigger | Encrypt | Decrypt | Reversible |
+| :--- | :--- | :--- | :--- | :--- |
+| **Active** | L1 linked, key in use | ✅ | ✅ | — |
+| **Suspended** | L2 unlinked from L1 | ❌ | ✅ | ✅ Re-link restores Active |
+| **Deactivated** | Grace period expired or explicit action | ❌ | ❌ | ❌ |
+| **Destroyed** | Explicit approved destroy | ❌ | ❌ | ❌ Key material gone |
+
+### Suspended State (Grace Period)
+
+When an L2 key becomes unlinked from its L1 — whether by accident or deliberate action — it transitions to Suspended:
+
+- **Encrypt is immediately blocked.** No new data can be encrypted with a broken chain.
+- **Decrypt continues.** Existing data remains readable. Running databases and volumes are not affected.
+- **Grace period: 30, 60, or 90 days** (configurable). The customer has a safe window to realize a mistake was made and re-link the key to restore Active state.
+- **Notification system fires immediately** and continues throughout the grace period.
+- **If no action by grace period expiry** → key transitions to Deactivated. Encrypt and Decrypt both blocked.
+
+This means accidental misconfigurations do not cause data loss or service outages. The customer is notified, has time to remediate, and can reverse the suspension. Only inaction causes the permanent transition.
+
+### Kill Switch
+
+The kill switch bypasses the grace period entirely. An explicit, approved revocation request — requiring Four-Eyes approval — triggers immediate transition to Deactivated or Destroyed. This is the deliberate sovereignty action: the customer has decided their data should be inaccessible, and Krypton enforces it instantly across all regions.
+
+**The distinction:**
+- Accidental unlink → Suspended → notification → grace period → remediation possible
+- Deliberate revocation → Deactivated/Destroyed → immediate → no reversal
+
+Krypton already supports both enforcement modes today. Eliminating CMK does not remove or weaken either capability. The controller replaces CMK's policy storage. Krypton's enforcement is unchanged.
 
 ---
 
@@ -130,7 +173,7 @@ The propagation SLA from REQ-022 — configuration changes within 2 minutes glob
 
 **CMK Registry Database (PostgreSQL)** — replaced by Tenant CRD in etcd. The Platform Mesh account model uses etcd as the source of truth for all service state. Keeping a separate PostgreSQL registry creates the dual-write problem: two sources of truth that must stay in sync. Eliminating it removes an entire class of consistency bugs.
 
-**CMK Approval Engine** — replaced by Platform Mesh ApprovalPolicy CRD. The Four-Eyes Principle semantics are preserved. The implementation moves from custom code to a platform-native feature that is reusable across all governance operations.
+**CMK Approval Engine** — replaced by Platform Mesh approval mechanism. The Four-Eyes Principle semantics are preserved. The implementation moves from custom code to a platform-native feature that is reusable across all governance operations.
 
 **CMK RBAC** — replaced by Kubernetes RBAC with workspace isolation. The Platform Mesh account model provides hierarchical isolation — each workspace is an independent control plane. L1-scoped permissions map to workspace-scoped RBAC rules.
 
@@ -162,7 +205,7 @@ The cost of doing nothing is not zero. It is continuous investment in an integra
 
 The L1 key model (always present, platform or customer) is resolved — see section above. These are the remaining items to validate before opening the PR:
 
-**Q1: ApprovalPolicy CRD** — Is this production-ready in Platform Mesh today? This is the single biggest dependency. If it does not exist or is not stable, the governance model cannot ship. We need a concrete answer before going to Mirza.
+**Q1: Platform Mesh approval mechanism** — Does Platform Mesh provide a production-ready multi-party approval capability today? This is the single biggest dependency. If it does not exist or is not stable, the governance model cannot ship. We need a concrete answer before going to Mirza.
 
 **Q2: Controller production hardening** — The showroom controller is demonstration code. It needs crash recovery, retry logic, idempotency guarantees, and observability before it can be considered production-ready. Is the team aligned on this scope?
 
