@@ -1,4 +1,4 @@
-# CMK Elimination: Product Vision Index
+# CMK Integration: Product Vision Index
 
 **Last Updated:** 2026-04-24
 **Status:** Approved
@@ -10,11 +10,11 @@
 
 | Document | Purpose | Audience | Read Time |
 | :--- | :--- | :--- | :--- |
-| [Internal Review Argument](cmk-elimination-internal-review.md) | Full technical argument for architect and tech lead review — grounded in ApeiroRA requirements and Platform Mesh docs | Architecture team, Tech Lead | 15 min |
-| [Platform Mesh Alignment Proposal](cmk-elimination-platform-mesh-alignment.md) | PR document for Platform Mesh team — explains CMK, the proposal, and the 6 questions we need answered | Platform Mesh team, Mirza | 15 min |
-| [Architecture Argument](cmk-elimination-argument.md) | Why we are eliminating the CMK layer — structured argument covering duplication, integration cost, and platform alignment | Management, Leadership | 10 min |
-| [Executive Summary](cmk-elimination-executive-summary.md) | What changes, what gets eliminated, cost impact, and high-level timeline | Leadership, Product | 5 min |
-| [What's Removed, What's Gained](cmk-elimination-what-removed-gained.md) | Before/after comparison of the architecture | Product, Engineering leads | 15 min |
+| [Internal Review Argument](cmk-integration-internal-review.md) | Full technical argument for architect and tech lead review — grounded in ApeiroRA requirements and Platform Mesh docs | Architecture team, Tech Lead | 15 min |
+| [Platform Mesh Alignment Proposal](cmk-integration-platform-mesh-alignment.md) | PR document for Platform Mesh team — explains CMK, the proposal, and the 6 questions we need answered | Platform Mesh team, Mirza | 15 min |
+| [Architecture Argument](cmk-integration-argument.md) | Why we are eliminating the CMK layer — structured argument covering duplication, integration cost, and platform alignment | Management, Leadership | 10 min |
+| [Executive Summary](cmk-integration-executive-summary.md) | What changes, what gets eliminated, cost impact, and high-level timeline | Leadership, Product | 5 min |
+| [What's Removed, What's Gained](cmk-integration-what-removed-gained.md) | Before/after comparison of the architecture | Product, Engineering leads | 15 min |
 | [ADR-105: CMK-as-Controller](../adr/cmk-as-controller-platform-mesh-native.md) | The architecture decision record — owned by engineering | Architects, Engineers | 20 min |
 
 ---

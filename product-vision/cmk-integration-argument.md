@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-24
 **Purpose:** Structured argument for eliminating the standalone CMK service in favour of CMK-as-Controller (Platform Mesh native)
-**Related:** [CMK Elimination Index](CMK-ELIMINATION-INDEX.md) · [ADR-105](../adr/cmk-as-controller-platform-mesh-native.md) · [Executive Summary](cmk-elimination-executive-summary.md)
+**Related:** [CMK Integration Index](CMK-INTEGRATION-INDEX.md) · [ADR-105](../adr/cmk-as-controller-platform-mesh-native.md) · [Executive Summary](cmk-integration-executive-summary.md)
 
 ---
 

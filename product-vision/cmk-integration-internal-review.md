@@ -4,7 +4,7 @@
 **Author:** Aysan
 **Status:** Internal Review — Pre-PR
 **Reviewers:** Architecture team, Tech Lead
-**Related:** [CMK Elimination Index](CMK-ELIMINATION-INDEX.md) · [Platform Mesh Alignment Proposal](cmk-elimination-platform-mesh-alignment.md) · [ADR-105](../adr/cmk-as-controller-platform-mesh-native.md)
+**Related:** [CMK Integration Index](CMK-INTEGRATION-INDEX.md) · [Platform Mesh Alignment Proposal](cmk-integration-platform-mesh-alignment.md) · [ADR-105](../adr/cmk-as-controller-platform-mesh-native.md)
 
 ---
 
@@ -126,7 +126,7 @@ The propagation SLA from REQ-022 — configuration changes within 2 minutes glob
 
 ## Kill Switch and Key Lifecycle: No Compromise From Removing CMK
 
-A key concern in any CMK elimination discussion is whether the kill switch and key governance capabilities are weakened. They are not — because these capabilities live in Krypton, not in CMK.
+A key concern in any CMK integration discussion is whether the kill switch and key governance capabilities are weakened. They are not — because these capabilities live in Krypton, not in CMK.
 
 **CMK never enforced key states. Krypton did.**
 
