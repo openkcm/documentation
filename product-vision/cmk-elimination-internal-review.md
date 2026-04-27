@@ -79,6 +79,31 @@ The showroom work also reveals what is not yet done: the controller currently ca
 
 ---
 
+## L1 Key Model: Always Present, Either Platform or Customer
+
+This is the key architectural decision that emerged from the internal review discussion.
+
+**Every account has an L1 key reference. Always. No exceptions.**
+
+When a tenant enables OpenKCM, the platform automatically provisions a platform-managed L1 key reference at account creation. The customer can replace it with their own key (BYOK/HYOK) at any time. The `L1KeyReference` field on the Tenant CRD is always populated — it is never empty.
+
+This model resolves two concerns raised during review:
+
+**The chain enforcement concern (team lead):** The key chain is always complete. Breaking it is always a deliberate act — an explicit `L1KeyRevocation` requiring Four-Eyes approval — never an accidental side effect of a misconfiguration. If the chain is intentionally broken, crypto stops. That is the point of the kill switch.
+
+**The operational safety concern (architect):** DEKs are always decrypt-able because an L1 is always present at the account level. A database volume cannot be accidentally bricked by a missing root key because there is no state where the root key is missing. The platform-managed L1 is the safety net; BYOK/HYOK is the upgrade path.
+
+| Mode | L1 owner | How it's set |
+| :--- | :--- | :--- |
+| **Platform-managed** | Provider (default) | Auto-provisioned at account creation |
+| **Customer-managed (BYOK/HYOK)** | Customer's external KMS | Customer replaces the `L1KeyReference` on the Tenant CRD |
+
+There is no mode with no L1. Tier 3 (no OpenKCM, no key governance) is a valid choice — but any account that enables OpenKCM always has an L1, whether platform-provisioned or customer-supplied.
+
+**The product statement:** OpenKCM provisions an L1 key reference for every account at creation. The platform holds it by default. Customers can replace it with their own key at any time. The key chain is always complete. The kill switch always works.
+
+---
+
 ## What Does NOT Change
 
 This is the most important section for the security review.
@@ -135,7 +160,7 @@ The cost of doing nothing is not zero. It is continuous investment in an integra
 
 ## Open Questions for the Architecture Review
 
-These are the items we need the team to validate before opening the PR:
+The L1 key model (always present, platform or customer) is resolved — see section above. These are the remaining items to validate before opening the PR:
 
 **Q1: ApprovalPolicy CRD** — Is this production-ready in Platform Mesh today? This is the single biggest dependency. If it does not exist or is not stable, the governance model cannot ship. We need a concrete answer before going to Mirza.
 
