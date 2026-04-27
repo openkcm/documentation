@@ -13,6 +13,13 @@ Every account that enables OpenKCM gets an L1 key reference automatically provis
 
 There are two modes. They are not just configuration options; they represent fundamentally different trust models with different capabilities and responsibilities. Every account has an L1 — there is no mode with no key governance.
 
+This document describes how those two modes work in practice. The scenarios are directly grounded in the ApeiroRA Platform Mesh account model documentation, which states:
+
+> *"Organizations can choose to utilize their own encryption keys for accounts, maintaining full control over their data, or rely on the platform's robust security mechanisms for simplified key management."*
+> — [ApeiroRA Platform Mesh Account Model: Key Management](https://documentation.apeirora.eu/docs/best-practices/platform-mesh/account-model#key-management)
+
+Mode A and Mode B below map directly to these two options. OpenKCM — operating as a native Platform Mesh component — is the mechanism that delivers both.
+
 ---
 
 ## Mode A: Platform-Managed L1 (Default)
