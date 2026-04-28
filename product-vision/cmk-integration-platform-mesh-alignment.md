@@ -9,15 +9,15 @@
 
 ## Why This Document Exists
 
-Following our sync with the showroom team on Igor's development (UI and controller for OpenKCM), we observed that Platform Mesh natively provides capabilities that the CMK service was built to deliver. This document proposes consolidating the CMK layer into Platform Mesh as a native service, moving key governance natively into Platform Mesh.
+Following our sync with the showroom team on Igor's development (UI and controller for OpenKCM), we observed that Platform Mesh natively provides capabilities that the CMK service was built to deliver. This document proposes consolidating some of key governance natively into Platform Mesh.
 
-This is a product vision proposal. We are opening it as a PR to get alignment from the Platform Mesh team before committing to implementation.
+This is a product vision proposal. We are opening it as a PR to get alignment from the Platform Mesh team.
 
 ---
 
 ## What CMK Is — For Context
 
-CMK (Customer Master Key service) is OpenKCM's governance layer. It is the "brain" of the OpenKCM — it never touches key material, but it controls **who can access what and under what conditions**.
+CMK (Customer Master Key service) is OpenKCM's governance layer for customer's key configuration and key binding (L1>L2). It never touches key material, but it controls **who can access what and under what conditions**.
 
 Specifically, CMK is responsible for:
 
@@ -51,7 +51,7 @@ This means the showroom work is not just a demo — it is a proof that the entir
 
 ## The Proposal
 
-**Consolidate the standalone CMK service into Platform Mesh as a native controller (CMK-as-Controller).**
+**Consolidate the standalone CMK service into Platform Mesh as a controller (CMK-as-Controller).**
 
 ### What this looks like
 
@@ -119,7 +119,7 @@ We need clarity on the following before we can commit to this direction.
 
 ### Question 1: Multi-Party Approval — Does Platform Mesh have a native mechanism and is it production-ready?
 
-The entire governance model depends on this. We need multi-party approval (Four-Eyes Principle) for L1 key linking and revocation. This is a hard compliance requirement (SOC2, TISAX, GDPR).
+We need multi-party approval (Four-Eyes Principle) for L1 key linking and revocation. This is a hard compliance requirement (SOC2, TISAX, GDPR).
 
 **We need to know:**
 - Does Platform Mesh have a native multi-party approval mechanism today as a shipped feature?
