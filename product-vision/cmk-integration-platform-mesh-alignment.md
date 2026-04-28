@@ -126,6 +126,8 @@ We need multi-party approval (Four-Eyes Principle) for L1 key linking and revoca
 - Does it support: minimum approver count, role-based approver pools, separation of proposer and approver?
 - Is it stable enough to build against, or is it still evolving?
 
+**Status: ✅ Agreed** — Platform Mesh has confirmed role-based approvals will be provided. Tracked in [platform-mesh/backlog#267](https://github.com/platform-mesh/backlog/issues/267).
+
 ### Question 2: Audit Trail — Is it sufficient for compliance?
 
 We need a tamper-evident, non-repudiable audit trail of every governance decision (who proposed, who approved, when, what changed). This must satisfy external auditors for SOC2, TISAX, and GDPR.
