@@ -200,6 +200,6 @@ We are not coming to this conversation blind. The analysis we have done surfaced
 
 The product vision is: **OpenKCM governance belongs in Platform Mesh, not in a standalone service.** The showroom work proves the architecture is viable. The CMK standalone service is integration debt that grows the longer we carry it.
 
-We are proposing this as a PR to start the conversation. We are not asking for immediate approval — we are asking for feedback on the five questions above so we can make an informed decision together.
+We are proposing this as a PR to start the conversation. We are not asking for immediate approval — we are asking for feedback on the six questions above so we can make an informed decision together.
 
 **The single most important question is Question 1 — whether Platform Mesh has a production-ready native approval mechanism. Everything else can be resolved with engineering work. That one depends on Platform Mesh.**
