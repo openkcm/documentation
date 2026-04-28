@@ -60,7 +60,7 @@ This means the showroom work is not just a demo — it is a proof that the entir
 | Custom REST/gRPC API | Kubernetes API — same as all Platform Mesh services |
 | PostgreSQL tenant registry | Tenant CRD in etcd |
 | PostgreSQL audit database | Platform Mesh audit trail |
-| Custom approval engine | Platform Mesh ApprovalPolicy CRD |
+| Custom approval engine | Platform Mesh native approval mechanism |
 | Custom RBAC | Kubernetes RBAC + Platform Mesh policies |
 | Standalone CMK portal | Platform Mesh portal (Luigi) |
 | 8 microservices | 1 controller |
@@ -70,7 +70,7 @@ This means the showroom work is not just a demo — it is a proof that the entir
 - **The Church & State separation (ADR-101) is preserved.** CMK-as-Controller still owns governance only — no key material, no crypto operations. Krypton still owns execution.
 - **L1 key sovereignty is preserved.** Customer-managed keys (BYOK/HYOK) remain in the customer's external KMS. The controller stores only references (ARNs), never material.
 - **The kill switch works.** L1KeyRevocation CRD triggers immediate revocation broadcast via Orbital, same as today. This is a security-critical capability and must be validated.
-- **Multi-party approval is preserved.** The Four-Eyes Principle moves from CMK's custom workflow engine to Platform Mesh ApprovalPolicy — same governance semantics, native implementation.
+- **Multi-party approval is preserved.** The Four-Eyes Principle moves from CMK's custom workflow engine to Platform Mesh's native approval mechanism — same governance semantics, native implementation.
 - **Audit trail is preserved.** Platform Mesh immutable event system replaces CMK's audit database. All governance decisions remain traceable for compliance.
 
 ---
@@ -103,7 +103,7 @@ Platform Mesh already provides every building block CMK was built to deliver:
 | CMK capability | Platform Mesh equivalent |
 | :--- | :--- |
 | Tenant registry | Kubernetes CRDs + etcd as source of truth |
-| Approval workflows / Four-Eyes | ApprovalPolicy CRD |
+| Approval workflows / Four-Eyes | Platform Mesh native approval mechanism |
 | RBAC | Kubernetes RBAC + workspace isolation |
 | Audit trail | Immutable Platform Mesh event system |
 | Portal UI | Luigi framework (already used by showroom) |
@@ -117,12 +117,12 @@ The Platform Mesh design principles — declarative APIs via Kubernetes Resource
 
 We need clarity on the following before we can commit to this direction.
 
-### Question 1: ApprovalPolicy CRD — Does it exist and is it production-ready?
+### Question 1: Multi-Party Approval — Does Platform Mesh have a native mechanism and is it production-ready?
 
 The entire governance model depends on this. We need multi-party approval (Four-Eyes Principle) for L1 key linking and revocation. This is a hard compliance requirement (SOC2, TISAX, GDPR).
 
 **We need to know:**
-- Does ApprovalPolicy CRD exist today as a shipped Platform Mesh feature?
+- Does Platform Mesh have a native multi-party approval mechanism today as a shipped feature?
 - Does it support: minimum approver count, role-based approver pools, separation of proposer and approver?
 - Is it stable enough to build against, or is it still evolving?
 
@@ -157,7 +157,7 @@ We want to make sure this direction is compatible with where Platform Mesh is go
 
 **We need to know:**
 - Is OpenKCM operating as a Platform Mesh native MSP (controller + CRDs) aligned with the Platform Mesh roadmap?
-- Are there planned changes to the account model, ApprovalPolicy, or audit system that would affect this design?
+- Are there planned changes to the account model, approval mechanism, or audit system that would affect this design?
 
 ### Question 6: MFA for HYOK setup
 
@@ -202,4 +202,4 @@ The product vision is: **OpenKCM governance belongs in Platform Mesh, not in a s
 
 We are proposing this as a PR to start the conversation. We are not asking for immediate approval — we are asking for feedback on the five questions above so we can make an informed decision together.
 
-**The single most important question is Question 1 — whether ApprovalPolicy CRD is production-ready. Everything else can be resolved with engineering work. That one depends on Platform Mesh.**
+**The single most important question is Question 1 — whether Platform Mesh has a production-ready native approval mechanism. Everything else can be resolved with engineering work. That one depends on Platform Mesh.**
