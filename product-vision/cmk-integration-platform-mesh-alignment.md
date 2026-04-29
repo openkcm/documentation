@@ -169,6 +169,15 @@ Our requirements (REQ-026) mandate multi-factor authentication for HYOK setup �
 - Does Platform Mesh handle MFA natively through its identity layer?
 - Or is this something OpenKCM must implement independently on top of Platform Mesh authentication?
 
+### Question 7: Notifications — Can Platform Mesh deliver OpenKCM key lifecycle notifications to customers?
+
+All customer-facing interactions go through Platform Mesh — customers should not need to check a separate system for key events. OpenKCM will generate and send a notification for every key operation (activation, suspension, grace period warnings, revocation). Platform Mesh is the delivery channel.
+
+**We need to know:**
+- Does Platform Mesh expose a notification mechanism that OpenKCM can publish key lifecycle events into?
+- Will customers receive these notifications through the Platform Mesh portal?
+- What is the expected integration pattern — push events to an API, publish to an event bus, or something else?
+
 ---
 
 ## What We Are NOT Asking Platform Mesh To Do
@@ -202,6 +211,6 @@ We are not coming to this conversation blind. The analysis we have done surfaced
 
 The product vision is: **OpenKCM governance belongs in Platform Mesh, not in a standalone service.** The showroom work proves the architecture is viable. The CMK standalone service is integration debt that grows the longer we carry it.
 
-We are proposing this as a PR to start the conversation. We are not asking for immediate approval — we are asking for feedback on the six questions above so we can make an informed decision together.
+We are proposing this as a PR to start the conversation. We are not asking for immediate approval — we are asking for feedback on the seven questions above so we can make an informed decision together.
 
 **The single most important question is Question 1 — whether Platform Mesh has a production-ready native approval mechanism. Everything else can be resolved with engineering work. That one depends on Platform Mesh.**
