@@ -2,7 +2,7 @@
 authors:
   - Aysan
 status: Draft
-last_updated: 2026-04-27
+last_updated: 2026-04-29
 ---
 
 # CMK Controller: Business Requirements
@@ -53,14 +53,6 @@ Customers must receive timely notifications for all significant key lifecycle ev
 
 Each tenant must have its own identity configuration defining who is authorized to manage their keys. This includes integration with the customer's identity provider so that key governance operations are tied to verified corporate identities.
 
-### 10. Governance Portal
+### 10. Tenant Termination
 
-Administrators must have a user interface to perform all of the above operations — onboarding tenants, managing key references, triggering and approving governance actions, and viewing the audit trail. This interface must be accessible within the Platform Mesh portal without requiring a separate login or context switch.
-
-### 11. Tenant Suspension and Restoration
-
-The platform must be able to temporarily suspend a tenant's account-level access — for compliance holds, investigations, or administrative reasons — and restore it when the issue is resolved. This is an administrative action taken by the platform operator, distinct from key-level suspension. Suspended tenants cannot perform new key operations but their existing data remains accessible.
-
-### 12. Tenant Termination
-
-When an account is permanently closed, OpenKCM must cleanly offboard the tenant, retiring their key references and ensuring no orphaned state remains in the system.
+When an account is permanently closed, OpenKCM must initiate a graceful offboarding of the tenant. Key references are not retired immediately — a configurable grace period applies to allow recovery in case of human error or accidental account closure. During this grace period, existing data remains accessible but no new key operations are permitted. Once the grace period expires without restoration, key references are retired and no orphaned state remains in the system.
