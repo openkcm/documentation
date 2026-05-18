@@ -29,6 +29,8 @@ You are welcome to contribute code in order to fix a bug or to implement a new f
 The following rule governs code contributions:
 
 * Contributions must be licensed under the [Apache 2.0 License](./LICENSE).
+* All code must follow our established style guides:
+  * **Protocol Buffers**: [Style Guide](docs/developers/programming-guides/style-guide-protobuf.md) and [Best Practices](docs/developers/programming-guides/best-practices-protobuf.md)
 * Due to legal reasons, contributors will be asked to accept a Developer Certificate of Origin (DCO) when they create the first pull request to this project. This happens in an automated fashion during the submission process. SAP uses [the standard DCO text of the Linux Foundation](https://developercertificate.org/).
 * Contributions must follow our [guidelines on AI-generated code](https://github.com/openkcm/.github/blob/main/CONTRIBUTING_USING_GENAI.md) in case you are using such tools.
 
