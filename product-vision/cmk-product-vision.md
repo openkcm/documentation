@@ -1,6 +1,6 @@
 ---
 status: Draft
-last_updated: 2026-06-16
+last_updated: 2026-06-24
 audience: Open Source Community, Contributors, Stakeholders
 ---
 
@@ -18,7 +18,11 @@ OpenKCM CMK governs encryption keys. The actual cryptographic operations are per
 
 When an organization runs workloads on a cloud platform, their data is typically encrypted — but by a key the platform controls. The organization trusts the platform not to look. That trust is implicit, unverifiable, and often not sufficient for regulated industries.
 
-Customer Managed Keys solve this by inverting control: the customer owns the root key, the platform never has access to key material, and the customer can revoke access at any time — including instantly, for all workloads at once.
+Most organizations also operate across multiple cloud providers, on-premise systems, and HSMs — each with its own key management interface. Keys end up scattered with no unified view, no single audit trail, and no single point of revocation.
+
+OpenKCM CMK solves both: it inverts control so the customer owns the root key and the platform never touches key material, and it acts as a single control plane across all keystores — AWS KMS, Azure Key Vault, GCP KMS, OpenBao, HSMs — managed from one UI, one audit trail, one kill switch.
+
+When access needs to be revoked, it is immediate. No waiting periods, no platform approval, no delay — the customer triggers the kill switch and all governed workloads become inaccessible instantly. Most commercial KMS products enforce mandatory delays of 7 to 90 days before key destruction. OpenKCM CMK does not.
 
 This is not a theoretical requirement. Defense agencies, government authorities, utilities, financial institutions, and any organization subject to data residency or sovereignty regulation needs this guarantee by law.
 
@@ -44,189 +48,21 @@ Teams deploying workloads who should never need to think about key management �
 
 OpenKCM CMK is offered in two variants, both sharing the same CMK Core.
 
----
-
-### OpenKCM CMK
-
-The full-featured, standalone CMK product. Runs on any Kubernetes environment — no platform dependency required. Designed for organizations that operate their own infrastructure and need complete key governance under their own control.
-
-**Target deployment:** Any Kubernetes cluster the customer operates themselves — on-premise, sovereign cloud, air-gapped, or any cloud provider.
-
-**Key capabilities:**
-
-- L1 Root Key registration and lifecycle management (enable, disable, rotate, delete)
-- BYOK (Bring Your Own Key) and HYOK (Hold Your Own Key) — customer key material never touches the platform
-- Pluggable keystore backends: OpenBao, AWS KMS, Azure Key Vault, GCP KMS, HSM via PKCS#11
-- Kill switch (Red Button) — instant revocation of all workloads across the deployment
-- Multi-party approval (Four-Eyes) — high-stakes operations require a second authorized approver
-- Full audit trail — tamper-evident log of every key operation, exportable for compliance
-- Tenant onboarding and offboarding
-- Role-based access control via OIDC / RBAC
-- Full CMK UI — own web interface, not embedded in any platform portal
-
-**Key hierarchy:**
-
-| Level | Name | Scope | Managed by |
-|---|---|---|---|
-| L1 | Root Key | Tenant | Customer — registered via OpenKCM CMK |
-| L2 | Domain Key | Workspace | OpenKCM CMK — internal |
-| L3 | Service Key | Service | Krypton — internal |
-| L4 | Data Encryption Key | Workload | Krypton — internal |
-
-The customer only ever registers and manages the L1 key. Everything below is derived and managed internally by OpenKCM CMK and Krypton.
-
----
-
-### OpenKCM CMK Platform Mesh
-
-A lightweight CMK integration embedded in the Platform Mesh portal. Designed for Platform Mesh operators and tenants who need customer-managed encryption without running a separate CMK product.
-
-**Target deployment:** Platform Mesh — running as a Kubernetes controller in the platform-admin namespace, with cross-namespace RBAC authority over the entire workspace.
-
-**Key capabilities:**
-
-- L1 Root Key registration at account level — one registration covers all namespaces in the account
-- BYOK and HYOK — same guarantee as OpenKCM CMK; OpenBao is the priority backend
-- Kill switch — one action revokes access across all namespaces in the workspace
-- Zero-touch encryption — workloads deployed from the marketplace are automatically encrypted without developer intervention
-- Audit trail — via Platform Mesh audit infrastructure
-- Access control — via Platform Mesh RBAC
-- Lightweight embedded UI — microfrontend in the Platform Mesh portal via Luigi; no separate web interface
-
-**What the security admin sees:**
-
-The OpenKCM section appears at account level in the Platform Mesh portal — not inside a namespace. Each account has one workspace, and that workspace contains multiple namespaces. When OpenKCM is enabled, Platform Mesh automatically provisions one L2 Domain Key per namespace.
-
-The security admin registers the organization's L1 root key at account level. She then binds that L1 key to the L2 Domain Keys that Platform Mesh has provisioned — one binding per namespace. Once bound, all workloads running in that namespace are encrypted under the L1→L2 key chain.
-
-**One unified UI — access gated by key level**
-
-All key levels (L1, L2, L3) are managed from a single account-level UI. What actions are available depends on the key level and the user's role:
-
-| Key level | Generated by | Admin actions |
+| | OpenKCM CMK | OpenKCM CMK Platform Mesh |
 |---|---|---|
-| L1 Root Key | Customer (via OpenKCM CMK) | Register, bind to L2, rotate, revoke, kill switch |
-| L2 Domain Key | Platform Mesh (automatic) | View, bind L1 to L2 — cannot create or delete |
-| L3 Service Key | Krypton (automatic) | View status — see open question below |
+| Deployment | Any Kubernetes cluster | Platform Mesh only |
+| UI | Full standalone web interface | Embedded microfrontend in Platform Mesh portal |
+| L2 provisioning | Customer via UI | CMK Controller (automatic, one per account/workspace) |
+| L3 management | Customer via UI | Security admin via UI |
+| L4 management | Customer via UI or consuming service via KMIP | Consuming service via KMIP only |
+| Tenant management | Customer via UI | Platform Mesh account model |
+| Audit | Built-in audit trail | Via Platform Mesh audit infrastructure |
+| RBAC | OIDC / RBAC | Via Platform Mesh OpenFGA |
+| Kill switch scope | Tenant | Org (Model 1) or account (Model 2) — see deployment models |
 
-The security admin sees the full key chain for the account in one place. Actions are only available where the admin has authority — Platform Mesh-generated and Krypton-generated keys are visible but not creatable or deletable by the admin.
-
-**What developers see:**
-
-Nothing. Zero-touch encryption means workloads come up encrypted without any key configuration on the developer's part.
-
-**L3 Service Key visibility — open question**
-
-L3 keys are generated by Krypton automatically when a service is deployed, wrapped under the L2 of that namespace. Three options are under consideration for how L3 keys are handled in the UI:
-
-- **Option A — L3 fully internal, never shown.** Krypton generates and manages L3 silently. The security admin only sees L1 and L2. The kill switch at L1 level cascades down through L2 and L3 automatically. Simplest model.
-
-- **Option B — L3 visible but not manageable.** The account-level UI shows a breakdown: workspace → namespace → services → each with their L3 key status. Read-only. Useful for the security admin to verify that each service (MongoDB, Postgres, etc.) is actually encrypted. No actions at L3 level.
-
-- **Option C — L3 has its own actions (selective revocation).** The kill switch can be triggered at L3 level — revoke only a specific service (e.g. MongoDB only), not the entire workspace. This requires UI at service level and introduces the question of who owns selective service revocation: OpenKCM CMK Platform Mesh or Krypton. This is an open architectural question to be resolved.
-
-> **Current direction:** Option B for the initial release — L3 visible, not manageable. Option C is a future feature pending resolution of the selective revocation ownership question.
-
----
-
-**Option A — L3 fully internal**
-
-```
-Account: ACME Corp
-└── OpenKCM CMK Platform Mesh (account level)
-        │
-        ├── L1 Root Key: openbao/acme-l1-master   [Active]  ← admin registers + manages
-        │
-        ├── Namespace: default
-        │       └── L2 Domain Key: acme-default-domain  [Bound]  ← admin binds L1→L2
-        │
-        ├── Namespace: db-a
-        │       └── L2 Domain Key: acme-dba-domain      [Bound]
-        │
-        └── Namespace: db-b
-                └── L2 Domain Key: acme-dbb-domain      [Bound]
-
-L3 Service Keys and L4 Data Keys are managed internally by Krypton.
-Admin never sees them. Kill switch at L1 cascades automatically.
-
-Kill switch:
-L1 revoked → L2 revoked → L3 revoked → all workloads inaccessible
-```
-
----
-
-**Option B — L3 visible, not manageable**
-
-```
-Account: ACME Corp
-└── OpenKCM CMK Platform Mesh (account level)
-        │
-        ├── L1 Root Key: openbao/acme-l1-master   [Active]  ← admin registers + manages
-        │
-        ├── Namespace: default
-        │       ├── L2 Domain Key: acme-default-domain  [Bound]  ← admin binds L1→L2
-        │       └── Services (read-only):
-        │               └── mongodb       → L3: acme-default-mongodb-key  [Active]
-        │
-        ├── Namespace: db-a
-        │       ├── L2 Domain Key: acme-dba-domain      [Bound]
-        │       └── Services (read-only):
-        │               └── postgres      → L3: acme-dba-postgres-key     [Active]
-        │
-        └── Namespace: db-b
-                ├── L2 Domain Key: acme-dbb-domain      [Bound]
-                └── Services (read-only):
-                        └── redis         → L3: acme-dbb-redis-key        [Active]
-
-Admin can see all L3 keys and their status. No actions available at L3 level.
-Kill switch at L1 still cascades automatically across all L2 and L3.
-```
-
----
-
-**Option C — L3 with selective revocation (future / open question)**
-
-```
-Account: ACME Corp
-└── OpenKCM CMK Platform Mesh (account level)
-        │
-        ├── L1 Root Key: openbao/acme-l1-master   [Active]  ← admin registers + manages
-        │
-        ├── Namespace: default
-        │       ├── L2 Domain Key: acme-default-domain  [Bound]
-        │       └── Services:
-        │               └── mongodb  → L3: acme-default-mongodb-key  [Active]  [Revoke]
-        │
-        ├── Namespace: db-a
-        │       ├── L2 Domain Key: acme-dba-domain      [Bound]
-        │       └── Services:
-        │               └── postgres → L3: acme-dba-postgres-key     [Active]  [Revoke]
-        │
-        └── Namespace: db-b
-                ├── L2 Domain Key: acme-dbb-domain      [Bound]
-                └── Services:
-                        └── redis    → L3: acme-dbb-redis-key        [Active]  [Revoke]
-
-Admin can revoke individual service keys without triggering the full kill switch.
-Example: revoke MongoDB only → MongoDB data inaccessible, Postgres and Redis unaffected.
-
-⚠ Open question: who owns selective revocation — OpenKCM CMK Platform Mesh or Krypton?
-```
-
-**Platform Mesh account model:**
-
-```
-Account (e.g. ACME Corp)          ← administrative boundary, CMK governed here
-    │
-    └── Workspace: acme-prod
-            │
-            ├── Namespace: default        → Application
-            ├── Namespace: db-a           → Database A
-            ├── Namespace: db-b           → Database B
-            └── Namespace: platform-admin → OpenKCM Controller
-```
-
-One L1 key at account level governs all workspaces and namespaces. Pressing the kill switch at account level locks everything — not just one namespace.
+Full product details:
+- [OpenKCM CMK — Standalone](cmk-standalone-vision.md)
+- [OpenKCM CMK — Platform Mesh](cmk-platform-mesh-vision.md)
 
 ---
 
@@ -261,7 +97,7 @@ The kill switch is a customer-initiated action that immediately revokes access t
 This is a one-way, destructive action. It is not a pause — it is a cryptographic lock. Once executed, data cannot be recovered without a new key registration and an approval cycle.
 
 For OpenKCM CMK: the kill switch scope is the tenant.
-For OpenKCM CMK Platform Mesh: the kill switch scope is the account/workspace — all namespaces within it.
+For OpenKCM CMK Platform Mesh: the kill switch scope depends on the deployment model — org level (all accounts in the organization) when enabled at org level, or account level (all namespaces in that account) when enabled at account level.
 
 ---
 
@@ -312,7 +148,7 @@ The lightweight CMK layer for Platform Mesh. Includes an embedded microfrontend 
 The shared business logic library consumed by both OpenKCM CMK and OpenKCM CMK Platform Mesh. Contains the key lifecycle state machine (NIST SP 800-57), L1 key validation, kill switch execution logic, tenant registry, audit trail logic, and multi-party approval logic. Deployment-agnostic — no dependency on any platform or cloud provider.
 
 **CMK Controller**
-A Kubernetes controller that runs inside Platform Mesh (in the platform-admin namespace). Watches OpenKCM CRDs and reconciles key state across the workspace. Used exclusively by OpenKCM CMK Platform Mesh — not part of the standalone OpenKCM CMK deployment.
+A Kubernetes controller that watches OpenKCM CRDs and reconciles key state. Placement depends on the deployment model — at org level when OpenKCM is enabled at org level (governs all accounts), or at account level when enabled at account level (governs that account only). Used exclusively by OpenKCM CMK Platform Mesh — not part of the standalone OpenKCM CMK deployment.
 
 **Krypton**
 The cryptographic execution engine. Performs key derivation, encryption, decryption, and KMIP services. Operates independently of OpenKCM CMK — it can run without CMK governance on top. OpenKCM CMK governs; Krypton executes.
