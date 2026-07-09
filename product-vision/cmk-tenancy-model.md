@@ -1,10 +1,19 @@
 ---
 status: Draft
-last_updated: 2026-06-24
+last_updated: 2026-07-09
 audience: Open Source Community, Contributors, Stakeholders
 ---
 
 # OpenKCM CMK Platform Mesh — Tenancy Model
+
+## Platform dependency — Model 1 not yet deliverable
+
+> **As of 2026-07-09 (confirmed with Platform Mesh team):**
+> kcp does not track the relationship between accounts and organizations as a structural platform primitive. The workspace tree is a visual representation only — there is no org-level API that a provider can build on for cross-account governance.
+>
+> **Model 1 (org-level OpenKCM) is blocked** until Platform Mesh builds an org-level provider API or dedicated virtual workspace. **Model 2 (account-level) is the only currently deliverable model.** The org-level scenarios in this document are target architecture, not current scope.
+
+---
 
 ## Overview
 
@@ -240,7 +249,9 @@ Platform Mesh (shared installation)
 
 ---
 
-### Scenario 2 — Air-gapped / sovereign deployment (Model 1: org-level enablement)
+### Scenario 2 — Air-gapped / sovereign deployment (Model 1: org-level enablement) ⚠ Future state
+
+> **Platform dependency not yet met.** This scenario requires an org-level provider API from Platform Mesh that does not exist today. kcp's workspace tree is visual only — there is no structural org primitive OpenKCM can build on. Documented here as target architecture pending Platform Mesh building this capability.
 
 An organization runs their own Platform Mesh installation. They are both the platform operator and the org owner. They enable OpenKCM at org level — the CMK Controller governs all accounts across the entire organization from one place.
 

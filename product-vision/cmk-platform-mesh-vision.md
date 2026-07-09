@@ -1,18 +1,27 @@
 ---
 status: Draft
-last_updated: 2026-06-24
+last_updated: 2026-07-09
 audience: Open Source Community, Contributors, Stakeholders
 ---
 
 # OpenKCM CMK — Platform Mesh
 
+## Platform dependency — Model 1 not yet deliverable
+
+> **As of 2026-07-09 (confirmed with Platform Mesh team):**
+> kcp does not track the relationship between accounts and organizations as a structural platform primitive. The workspace tree is a visual representation only — there is no org-level API that OpenKCM can build on for cross-account governance.
+>
+> **Model 1 (org-level OpenKCM) is blocked** until Platform Mesh builds an org-level provider API or dedicated virtual workspace. This document describes both models as target architecture. **Model 2 (account-level) is the only currently deliverable model.**
+
+---
+
 ## Overview
 
 OpenKCM CMK Platform Mesh is a lightweight CMK integration embedded in the Platform Mesh portal. Designed for Platform Mesh operators and tenants who need customer-managed encryption without running a separate CMK product.
 
-OpenKCM is a **service provider** on Platform Mesh. It publishes its key management API through the Platform Mesh provider-consumer model. When an operator enables OpenKCM from the marketplace — at either org level or account level — an APIBinding is created and key lifecycle operations become available in that workspace without any direct access to the OpenKCM provider infrastructure.
+OpenKCM is a **service provider** on Platform Mesh. It publishes its key management API through the Platform Mesh provider-consumer model. When an operator enables OpenKCM from the marketplace at account level — an APIBinding is created and key lifecycle operations become available in that workspace without any direct access to the OpenKCM provider infrastructure.
 
-**Target deployment:** Platform Mesh — running as a Kubernetes controller, with placement at org level or account level depending on the chosen deployment model (see Deployment Models below).
+**Target deployment:** Platform Mesh — running as a Kubernetes controller at account level (Model 2, current) or org level (Model 1, future — see platform dependency above).
 
 ---
 
@@ -25,9 +34,9 @@ Platform Mesh is built on **kcp**, a Kubernetes control plane without container 
 | **APIExport** | Provider publishes its service API | OpenKCM publishes the CMK API (key registration, binding, kill switch) from its provider workspace |
 | **APIBinding** | Consumer subscribes to a provider API | When an account enables OpenKCM from the marketplace, it creates an APIBinding — the CMK API appears in their workspace |
 | **Virtual workspaces** | Aggregated view of all bound consumer objects | The CMK Controller watches all consumer workspaces from one virtual endpoint — no per-workspace polling |
-| **OpenFGA (ReBAC)** | Relationship-based authorization derived from org hierarchy | Role separation between security admin and developer is handled automatically — no custom role logic needed in OpenKCM |
+| **OpenFGA (ReBAC)** | Relationship-based authorization within an account | OpenKCM defines its own role model via Platform Mesh provider permissions — Platform Mesh is not opinionated about authorization |
 
-**Placement and governance scope:** Where OpenKCM is placed determines what it can govern. At org level, it has a single aggregated view across all accounts and workspaces — required for cross-workspace kill switch and single pane of glass L1 management (Model 1). At account level, it governs only that account's workspace — the account holder sees and controls only their own keys, and cross-account visibility is intentionally absent (Model 2). Both placements are valid; the customer chooses by where they enable OpenKCM from the marketplace.
+**Placement and governance scope:** Where OpenKCM is placed determines what it can govern. At account level (Model 2 — current), it governs only that account's workspace — the account holder sees and controls only their own keys, and cross-account visibility is intentionally absent. At org level (Model 1 — future, platform dependency not yet met), it would have a single aggregated view across all accounts — required for cross-workspace kill switch and single pane of glass L1 management. Model 1 requires Platform Mesh to build an org-level provider API first.
 
 ---
 
@@ -74,30 +83,31 @@ The tenant boundary is always the account/workspace. L2 is always one per accoun
 
 **The difference between the two models is how many L2s the CMK Controller governs** — and therefore how many accounts fall under a single security admin's key governance.
 
-| | Model 1 (org level) | Model 2 (account level) |
+| | Model 1 (org level) ⚠ future | Model 2 (account level) ✓ current |
 |---|---|---|
 | Controller scope | All accounts in the org | One account only |
 | L2s governed | N — one per account | 1 |
 | L1 → L2 bindings | N — one per account | 1 |
 | Kill switch scope | All accounts in the org | That account only |
 | Who operates OpenKCM | Customer (= platform provider = org owner) | Account holder independently |
+| Platform dependency | Requires org-level provider API — not yet available in Platform Mesh | None — available today |
 
-OpenKCM on Platform Mesh covers two deployment scenarios. The deployment model is **self-selecting** — it is determined by where the customer enables OpenKCM from the marketplace, not by a configuration flag or a separate product. This gives customers full flexibility to choose their own sovereignty model.
+OpenKCM on Platform Mesh covers two deployment scenarios. **Model 2 is the currently deliverable model.** Model 1 is documented as target architecture pending Platform Mesh building an org-level provider primitive.
 
-### How the self-selection works
+### How the self-selection works (target state)
 
-| Where OpenKCM is enabled | Deployment model | Who operates OpenKCM |
+| Where OpenKCM is enabled | Deployment model | Status |
 |---|---|---|
-| **Org level** | Air-gapped / sovereign | Customer (= platform provider = org owner) |
-| **Account level** | Enterprise / managed platform | Account holder independently |
+| **Account level** | Enterprise / managed platform | ✓ Deliverable today |
+| **Org level** | Air-gapped / sovereign | ⚠ Blocked — requires Platform Mesh org-level provider API |
 
-The customer makes this choice once at enablement time. Platform Mesh APIExport/APIBinding supports enablement at different levels of the hierarchy — OpenKCM publishes two APIExports, one at org level and one at account level. The customer binds to whichever fits their sovereignty requirement.
-
-> **Open question (for RFC meeting):** Can one OpenKCM deployment serve both models simultaneously via two APIExports — one at org level, one at account level? To be validated with the Platform Mesh team.
+> **Open question (confirmed with Platform Mesh team 2026-07-09):** kcp does not expose an org-level structural primitive today. The workspace tree is visual only. Platform Mesh would need to build a dedicated org-level provider API or virtual workspace for Model 1 to be possible. Timeline unknown.
 
 ---
 
-### Model 1 — Org level enablement (air-gapped / sovereign)
+### Model 1 — Org level enablement (air-gapped / sovereign) ⚠ Future state
+
+> **Platform dependency not yet met.** This model requires an org-level provider API from Platform Mesh that does not exist today. Documented here as target architecture only.
 
 The customer enables OpenKCM from the marketplace at **org level**. OpenKCM operates across the entire organization. The org-level super admin has full cross-workspace visibility and control — single pane of glass, cross-workspace kill switch, full governance. The platform provider and the account holder are the same entity.
 
@@ -116,7 +126,7 @@ CMK Controller at org level
 
 ---
 
-### Model 2 — Account level enablement (enterprise / managed platform)
+### Model 2 — Account level enablement (enterprise / managed platform) ✓ Current
 
 The customer enables OpenKCM from the marketplace at **account level**. OpenKCM operates within that account only. The account holder manages their own keys independently — the platform provider has zero visibility into that account's key governance. Different accounts can each enable their own OpenKCM instance independently.
 
@@ -149,17 +159,17 @@ CMK Controller scoped to Account B
 
 ## Role separation — how authorization works
 
-Platform Mesh uses **OpenFGA** (relationship-based access control) to derive permissions from the organizational hierarchy. OpenKCM does not need to build custom role logic — the platform handles it.
+Platform Mesh is **not opinionated about authorization** — it delegates role definition to the provider via the provider permissions feature. OpenKCM defines its own role model using this feature.
 
-| Role | Scope | What they can do in OpenKCM |
+> **As of 2026-07-09:** OpenKCM's role model is an open product decision. The table below reflects the proposed roles — not yet confirmed. A role definition document is pending. The Platform Mesh authorization UI epic (ships this year) will allow the OpenKCM UI to show/hide actions based on role once the role model is finalized.
+
+| Role (proposed) | Scope | What they can do in OpenKCM |
 |---|---|---|
-| Super Admin | Org level — air-gapped model | Full access — all accounts, all keys, cross-workspace kill switch |
-| Platform Operator | Org level — enterprise model | Infrastructure health only — no key material, no key operations |
-| Security Admin | Org level | Register L1 keys, bind L1→L2, trigger kill switch, view full key chain across all accounts |
-| Workspace Admin | Workspace level | View key status for their workspace — no key management actions |
-| Developer | Namespace level | Nothing — zero-touch encryption; no key visibility |
+| L1 Key Administrator | Account level | Register L1 keys, bind L1→L2, trigger kill switch, view full key chain |
+| Security Admin | Account level | Create L3 service keys, view key status |
+| Developer / Member | Account level | Nothing — zero-touch encryption; no key visibility |
 
-OpenFGA derives the permission boundary from the organizational relationship graph automatically. No per-user configuration needed in OpenKCM.
+OpenKCM uses Platform Mesh provider permissions to enforce role boundaries. Custom role logic lives in OpenKCM, not in Platform Mesh.
 
 ---
 
