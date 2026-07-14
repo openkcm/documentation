@@ -1,6 +1,6 @@
 ---
 status: Draft
-last_updated: 2026-07-09
+last_updated: 2026-07-14
 audience: Open Source Community, Contributors, Stakeholders
 ---
 
@@ -42,12 +42,12 @@ Platform Mesh is built on **kcp**, a Kubernetes control plane without container 
 
 ## Key capabilities
 
-- L1 Root Key registration at org level — one registration covers all accounts and all their workspaces
+- L1 Root Key registration at account level — the account holder registers their own L1 key and binds it to their L2
 - BYOK and HYOK — customer key material never touches the platform; OpenBao is the priority backend
-- Kill switch — one action revokes access across all accounts and all their workspaces in the organization
+- Kill switch — one action revokes access to all namespaces and services within the account
 - Zero-touch encryption — workloads deployed from the marketplace are automatically encrypted without developer intervention
 - Audit trail — via Platform Mesh audit infrastructure
-- Access control — via Platform Mesh OpenFGA (no custom role logic in OpenKCM)
+- Access control — via Platform Mesh provider permissions (OpenKCM defines its own role model)
 - Lightweight embedded UI — microfrontend in the Platform Mesh portal via Luigi; no separate web interface
 
 ---
@@ -56,9 +56,9 @@ Platform Mesh is built on **kcp**, a Kubernetes control plane without container 
 
 | Level | Name | Provisioned by | Admin actions |
 |---|---|---|---|
-| L1 | Root Key | Security admin (via OpenKCM UI at org level) | Register, rotate, revoke, kill switch |
-| L2 | Domain Key | CMK Controller — automatic, one per account/workspace | View only — bind L1→L2 done by security admin at org level; cannot create or delete |
-| L3 | Service Key | Security admin (via OpenKCM UI) | Create, view status — see open question below |
+| L1 | Root Key | Key Admin (via OpenKCM UI at account level) | Register, bind to L2, trigger kill switch |
+| L2 | Domain Key | CMK Controller — automatic, one per account/workspace | View only — cannot create or delete |
+| L3 | Service Key | Account Encryption Admin (via OpenKCM UI, per namespace) | Create, view status |
 | L4 | Data Encryption Key | Consuming service (via Krypton Gateway KMIP) | Not visible to admin |
 
 ### How L2 is provisioned
@@ -161,13 +161,15 @@ CMK Controller scoped to Account B
 
 Platform Mesh is **not opinionated about authorization** — it delegates role definition to the provider via the provider permissions feature. OpenKCM defines its own role model using this feature.
 
-> **As of 2026-07-09:** OpenKCM's role model is an open product decision. The table below reflects the proposed roles — not yet confirmed. A role definition document is pending. The Platform Mesh authorization UI epic (ships this year) will allow the OpenKCM UI to show/hide actions based on role once the role model is finalized.
+> **As of 2026-07-09 (confirmed with Platform Mesh team):** OpenKCM uses provider permissions to define custom roles. The Platform Mesh authorization UI epic (ships this year) will allow the OpenKCM UI to show/hide actions based on role once it ships. Until then: implement functionality fully, apply role enforcement to UI once the epic ships.
 
-| Role (proposed) | Scope | What they can do in OpenKCM |
+All roles are scoped to **account level**. There are no cross-account roles.
+
+| Role | Scope | What they can do |
 |---|---|---|
-| L1 Key Administrator | Account level | Register L1 keys, bind L1→L2, trigger kill switch, view full key chain |
-| Security Admin | Account level | Create L3 service keys, view key status |
-| Developer / Member | Account level | Nothing — zero-touch encryption; no key visibility |
+| Key Admin | Account | Registers L1 key, binds L1→L2, triggers kill switch, sees full key hierarchy (L1, L2, all namespaces, all L3 keys) |
+| Account Encryption Admin | Namespace | Manages L3 service key for their namespace only — no visibility into other namespaces, L1, or L2 |
+| Developer | Namespace (application only) | Deploys services — zero-touch encryption, no key visibility at any level |
 
 OpenKCM uses Platform Mesh provider permissions to enforce role boundaries. Custom role logic lives in OpenKCM, not in Platform Mesh.
 
@@ -176,20 +178,18 @@ OpenKCM uses Platform Mesh provider permissions to enforce role boundaries. Cust
 ## Platform Mesh account model
 
 ```
-Organization (e.g. ACME Corp)        ← OpenKCM lives here (org level)
+Account (e.g. ACME Corp)             ← OpenKCM scoped here (account level)
     │
-    ├── CMK Controller                ← org level, watches all account workspaces
+    ├── CMK Controller                ← account level, watches this account's workspace
     │
-    └── Account: acme-prod           ← workspace, APIBinding to OpenKCM here
+    └── Workspace: acme-prod         ← one L2 Domain Key auto-provisioned here
             │
             ├── Namespace: default        → Application workloads
-            ├── Namespace: db-a           → Database A
-            └── Namespace: db-b           → Database B
+            ├── Namespace: db-a           → Database A (L3 key, managed by Encryption Admin for db-a)
+            └── Namespace: db-b           → Database B (L3 key, managed by Encryption Admin for db-b)
 ```
 
-One organization has one or more accounts. Each account maps to a kcp workspace. The CMK Controller provisions one L2 domain key per account workspace automatically. The security admin registers one or more L1 keys at org level and binds each L1 key to the relevant account workspaces.
-
-One L1 key can be bound to multiple workspaces. Different workspaces can be bound to different L1 keys. Pressing the kill switch at org level locks everything — all workspaces, all namespaces, all workloads, regardless of which L1 key they are bound to.
+One account has one workspace. The CMK Controller provisions one L2 domain key per account workspace automatically. The Key Admin registers an L1 key at account level and binds it to the account's L2 key. Account Encryption Admins create L3 service keys for each service within their namespace. Different namespaces are governed by different Account Encryption Admins — no cross-namespace visibility.
 
 ---
 
@@ -301,8 +301,8 @@ Example: revoke MongoDB only → MongoDB data inaccessible, Postgres and Redis u
 
 | Action | Scope | Effect |
 |---|---|---|
-| Revoke L1 Root Key | All workspaces bound to that L1 | All services in those workspaces become inaccessible |
-| Kill switch (org level) | Entire organization | All workspaces, all namespaces, all services inaccessible — regardless of which L1 they are bound to |
+| Revoke L1 Root Key | That account | All namespaces and services in the account become inaccessible |
+| Kill switch (account level) | That account | All namespaces, all services inaccessible — cascades through L2 → L3 → L4 automatically |
 
 ---
 
@@ -324,22 +324,17 @@ The CMK Controller connects to Platform Mesh via outbound HTTPS to kcp — no in
 Platform Mesh
 │
 ├── kcp (control plane)
-│       ├── Organization workspace: root:acme    ← OpenKCM lives here
-│       │       └── OpenKCM APIBinding → CMK API available to all accounts
-│       └── Virtual workspace: aggregated view of all bound account objects
+│       ├── Account workspace: acme-prod  ← OpenKCM enabled here at account level
+│       │       └── OpenKCM APIBinding → CMK API available in this workspace
+│       └── Virtual workspace: aggregated view of this account's bound objects
 │
-├── OpenKCM provider cluster (org level)
-│       ├── CMK Controller  ← watches virtual workspace, provisions L2, manages lifecycle
+├── OpenKCM provider cluster (account level)
+│       ├── CMK Controller  ← watches this account's workspace, provisions L2, manages lifecycle
 │       ├── CMK UI (microfrontend via Luigi, embedded in Platform Mesh portal)
 │       └── OpenBao binding ← provider-to-provider, key material stays in customer keystore
 │
-├── Account workspace: acme-prod
-│       ├── L2 Domain Key CR  ← auto-provisioned by CMK Controller
-│       ├── L3 Service Key CRs ← created by security admin via OpenKCM UI
-│       └── Workload namespaces → KMIP endpoint + key ID injected into pods at deploy time
-│
-└── Account workspace: acme-dev
+└── Account workspace: acme-prod
         ├── L2 Domain Key CR  ← auto-provisioned by CMK Controller
-        ├── L3 Service Key CRs ← created by security admin via OpenKCM UI
+        ├── L3 Service Key CRs ← created by Account Encryption Admin via OpenKCM UI per namespace
         └── Workload namespaces → KMIP endpoint + key ID injected into pods at deploy time
 ```

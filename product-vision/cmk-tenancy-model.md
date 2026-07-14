@@ -1,6 +1,6 @@
 ---
 status: Draft
-last_updated: 2026-07-09
+last_updated: 2026-07-14
 audience: Open Source Community, Contributors, Stakeholders
 ---
 
@@ -68,7 +68,7 @@ This document defines the tenancy model for OpenKCM CMK Platform Mesh. It descri
 |   L1 Root Key        |
 +----------------------+
 | L1KeyID              |
-| OrgID / AccountID    | ← org level (Model 1) or account level (Model 2)
+| AccountID            | ← account level (Model 2, current); org level future state only
 | Name                 |
 | Status               |
 | KeystoreType         | ← OpenBao, AWS KMS, Azure KV, HSM...
@@ -120,7 +120,7 @@ This document defines the tenancy model for OpenKCM CMK Platform Mesh. It descri
 |  Security Admin  |
 +------------------+
 | UserID           |
-| OrgID / AccountID| ← org level (Model 1) or account level (Model 2)
+| AccountID        | ← account level (Model 2, current)
 | Role             |
 +------------------+
         |
@@ -138,10 +138,10 @@ This document defines the tenancy model for OpenKCM CMK Platform Mesh. It descri
 The top-level administrative boundary. Represents one customer organization. One account has exactly one workspace. The account is the tenant — pressing the kill switch at account level locks the entire account.
 
 ### Security Admin
-A user responsible for registering L1 root keys, binding them to L2 domain keys, creating L3 service keys, and triggering the kill switch. In Model 1 (org-level enablement), the security admin operates at org level and has visibility across all accounts. In Model 2 (account-level enablement), the security admin operates within their own account only.
+A user responsible for registering L1 root keys, binding them to L2 domain keys, creating L3 service keys, and triggering the kill switch. In Model 2 (account-level enablement — the current model), the security admin operates within their own account only. In Model 1 (org-level — future state, platform dependency not yet met), the security admin would operate at org level with visibility across all accounts.
 
 ### CMK Controller
-A Kubernetes controller that watches OpenKCM CRDs and reconciles key state. In Model 1, it runs at org level and governs all accounts in the organization. In Model 2, it is scoped to a single account. One controller per OpenKCM deployment.
+A Kubernetes controller that watches OpenKCM CRDs and reconciles key state. In Model 2 (current), it is scoped to a single account. In Model 1 (future state), it would run at org level and govern all accounts in the organization. One controller per OpenKCM deployment.
 
 ### Workspace
 The deployment environment within an account. One account has one workspace. Contains multiple namespaces where applications and services run.
@@ -150,7 +150,7 @@ The deployment environment within an account. One account has one workspace. Con
 A Kubernetes namespace within the workspace. Applications and services run here. Namespace-level encryption separation is achieved through L3 Service Keys — one per service — all wrapped under the account's single L2 Domain Key.
 
 ### L1 Root Key
-A customer-owned root encryption key. Registered by the security admin at org level (Model 1) or account level (Model 2). Key material never leaves the customer's external keystore — OpenKCM CMK holds only a reference. One L1 key can be bound to multiple accounts (Model 1). Each L1 key is backed by one external keystore.
+A customer-owned root encryption key. Registered by the Key Admin at account level (Model 2 — current). Key material never leaves the customer's external keystore — OpenKCM CMK holds only a reference. Each L1 key is backed by one external keystore.
 
 ### External Keystore
 The customer's own key management system where L1 key material lives. Supported backends: OpenBao, AWS KMS, Azure Key Vault, GCP KMS, HSM via PKCS#11. OpenKCM CMK never stores key material — it holds a pointer and calls the keystore at runtime via Krypton.
@@ -174,13 +174,12 @@ An application or workload running inside a namespace (e.g. MongoDB, Postgres, R
 | Rule | Description |
 |---|---|
 | One L2 per account | CMK Controller provisions exactly one L2 Domain Key per account/workspace via Krypton API |
-| Admin registers L1 | The security admin registers one or more L1 keys at org level (Model 1) or account level (Model 2) |
-| Admin binds L1 → L2 | The security admin decides which L1 key governs which account |
+| Admin registers L1 | The Key Admin registers an L1 key at account level |
+| Admin binds L1 → L2 | The Key Admin binds the L1 key to the account's L2 key |
 | One L1 per L2 | Each L2 Domain Key is bound to exactly one L1 Root Key at a time |
-| One L1 → many L2s | One L1 Root Key can be bound to multiple accounts (Model 1) |
 | Different L1s per account | Different accounts can be governed by different L1 keys |
-| Admin creates L3 | The security admin creates one L3 Service Key per service via the OpenKCM CMK UI |
-| Unbound account | An account with no L1 binding is not customer-governed — it uses platform-managed encryption until the admin binds an L1 key |
+| Admin creates L3 | The Account Encryption Admin creates one L3 Service Key per service via the OpenKCM CMK UI, scoped to their namespace |
+| Unbound account | An account with no L1 binding is not customer-governed — it uses platform-managed encryption until the Key Admin binds an L1 key |
 
 ---
 
@@ -188,11 +187,8 @@ An application or workload running inside a namespace (e.g. MongoDB, Postgres, R
 
 | Action | Scope | Effect |
 |---|---|---|
-| Revoke L1 Root Key | All accounts bound to that L1 | All services in those accounts become inaccessible |
-| Kill switch — Model 1 (org level) | Entire organization | All accounts, all namespaces, all services inaccessible — regardless of which L1 they are bound to |
-| Kill switch — Model 2 (account level) | That account only | All namespaces and services in that account become inaccessible |
-
-In Model 1, if different accounts are bound to different L1 keys, revoking one L1 affects only the accounts bound to it. The org-level kill switch revokes everything across all accounts.
+| Revoke L1 Root Key | That account | All namespaces and services in the account become inaccessible |
+| Kill switch (account level) | That account | All namespaces, all services inaccessible — cascades through L2 → L3 → L4 automatically |
 
 ---
 
