@@ -28,7 +28,7 @@ The CMK API Server needs identity management integration because:
 **So that** I can enforce group-based access controls for CMK operations  
 
 **Plugin Initialization Journey:**
-1. **Discover Identity Management Service**: I identify available identity providers on Platform Mesh
+1. **Discover Identity Management Service**: I identify available identity providers on the platform
    ```yaml
    # Service discovery for identity management
    apiVersion: v1
@@ -387,7 +387,7 @@ CMK API Server
 ├── Access Policy Engine
 └── Audit Logger with Group Context
 
-Identity Provider Integration (Platform Mesh)
+Identity Provider Integration (Platform)
 ├── Keycloak Service (Primary - Pending Integration)
 ├── Active Directory Connector (Optional)
 ├── External LDAP Services (Optional)

@@ -1,29 +1,30 @@
 ---
 authors:
   - Aysan
+last_updated: 2026-07-15
 ---
 
 ## Persona
-**Platform Mesh Administrator** - An infrastructure administrator responsible for deploying and managing OpenKCM's Crypto Layer services within the Platform Mesh infrastructure. They ensure the Crypto Service is properly deployed, configured, and integrated with the mesh for tenant services like MongoDB.
+**Platform Mesh Administrator** - An infrastructure administrator responsible for deploying and managing Krypton within the Platform Mesh infrastructure. They ensure Krypton is properly deployed, configured, and integrated with the mesh for tenant services like MongoDB.
 
 ## Overview
 
-As a Platform Mesh Administrator, I need to deploy OpenKCM's Crypto Layer service within the Platform Mesh infrastructure so that tenant services (like MongoDB, PostgreSQL, microservices) can request encryption keys for data protection. The Crypto Layer must be highly available, scalable, and integrated with Platform Mesh's service discovery and networking.
+As a Platform Mesh Administrator, I need to deploy Krypton within the Platform Mesh infrastructure so that tenant services (like MongoDB, PostgreSQL, microservices) can request encryption keys for data protection. Krypton must be highly available, scalable, and integrated with Platform Mesh's service discovery and networking.
 
 ## User Stories
 
-### Story 1: Deploy Crypto Service in Platform Mesh
+### Story 1: Deploy Krypton in Platform Mesh
 **As a** Platform Mesh Administrator  
-**I want to** deploy the OpenKCM Crypto Service within Platform Mesh  
+**I want to** deploy Krypton within Platform Mesh  
 **So that** tenant services can access encryption key management capabilities  
 
 **Deployment Journey:**
 1. **Infrastructure Preparation**: I prepare the Platform Mesh environment
    - Kubernetes cluster with sufficient resources allocated
-   - Network policies configured for Crypto Service communication
+   - Network policies configured for Krypton communication
    - Storage provisioned for key metadata and configuration
 
-2. **Crypto Service Deployment**: I deploy the Crypto Service components
+2. **Krypton Deployment**: I deploy the Krypton components
    ```yaml
    # crypto-service-deployment.yaml
    apiVersion: apps/v1
@@ -45,13 +46,11 @@ As a Platform Mesh Administrator, I need to deploy OpenKCM's Crypto Layer servic
            - containerPort: 5696  # KMIP port
            - containerPort: 8443  # HTTPS management
            env:
-           - name: POSTGRES_CONNECTION
-             value: "postgresql://crypto-db:5432/openkcm"
            - name: TENANT_ISOLATION_ENABLED
              value: "true"
    ```
 
-3. **Service Registration**: I register Crypto Service with Platform Mesh
+3. **Service Registration**: I register Krypton with Platform Mesh
    ```yaml
    # crypto-service.yaml  
    apiVersion: v1
@@ -59,9 +58,6 @@ As a Platform Mesh Administrator, I need to deploy OpenKCM's Crypto Layer servic
    metadata:
      name: openkcm-crypto-service
      namespace: openkcm-system
-     annotations:
-       platform-mesh.io/service-type: "encryption-service"
-       platform-mesh.io/discovery-enabled: "true"
    spec:
      selector:
        app: openkcm-crypto-service
@@ -80,15 +76,15 @@ As a Platform Mesh Administrator, I need to deploy OpenKCM's Crypto Layer servic
    - Platform Mesh health check integration
 
 **Requirements:**
-- Crypto Service deployed with high availability (3+ replicas)
+- Krypton deployed with high availability (3+ replicas)
 - Service registered in Platform Mesh service discovery
 - Health checks configured and reporting healthy status
 - Network policies allow tenant service communication
 
-### Story 2: Configure Crypto Service Integration with Platform Mesh
+### Story 2: Configure Krypton Integration with Platform Mesh
 **As a** Platform Mesh Administrator  
-**I want to** configure the Crypto Service for seamless Platform Mesh integration  
-**So that** tenant services can discover and authenticate with the Crypto Service  
+**I want to** configure Krypton for seamless Platform Mesh integration  
+**So that** tenant services can discover and authenticate with Krypton  
 
 **Configuration Journey:**
 1. **Service Discovery Setup**: I configure Platform Mesh service discovery
@@ -158,33 +154,24 @@ As a Platform Mesh Administrator, I need to deploy OpenKCM's Crypto Layer servic
    - Service discoverable through Platform Mesh DNS
    - mTLS certificates properly provisioned and valid
    - Network policies allow authorized tenant service access
-   - Crypto Service registers successfully with service mesh
+   - Krypton registers successfully with service mesh
 
 **Requirements:**
-- Service discoverable via Platform Mesh service registry
+- Krypton discoverable via Platform Mesh service registry
 - mTLS certificates automatically provisioned and rotated
 - Network policies enforce secure tenant service access
 - Integration validated through connectivity tests
 
-### Story 3: Configure Multi-Tenant Isolation for Crypto Service
+### Story 3: Configure Multi-Tenant Isolation for Krypton
 **As a** Platform Mesh Administrator  
-**I want to** configure tenant isolation within the Crypto Service  
+**I want to** configure tenant isolation within Krypton  
 **So that** each tenant's encryption keys are completely isolated from other tenants  
 
 **Isolation Configuration Journey:**
-1. **Tenant Database Setup**: I configure PostgreSQL with Row-Level Security
-   ```sql
-   -- Enable Row-Level Security for tenant isolation
-   ALTER TABLE key_metadata ENABLE ROW LEVEL SECURITY;
-   
-   -- Create tenant isolation policy
-   CREATE POLICY tenant_isolation ON key_metadata
-     USING (tenant_id = current_setting('app.current_tenant'));
-   
-   -- Create tenant-specific database roles
-   CREATE ROLE tenant_a_crypto;
-   GRANT SELECT, INSERT, UPDATE ON key_metadata TO tenant_a_crypto;
-   ```
+1. **Tenant Isolation Setup**: I configure API-level tenant isolation
+   - Tenant context is enforced on every request via mTLS certificate identity
+   - Cross-tenant access is rejected at the service layer
+   - Each tenant's key data is scoped to their authenticated identity
 
 2. **Tenant Certificate Provisioning**: I set up tenant-specific mTLS certificates
    ```yaml
@@ -222,24 +209,21 @@ As a Platform Mesh Administrator, I need to deploy OpenKCM's Crypto Layer servic
                organizationalUnit: "tenant-a"
          route:
            tenant: "tenant-a"
-           database: "tenant_a_keys"
    ```
 
 4. **Isolation Validation**: I test tenant boundaries
    - Verify tenant-a services can only access tenant-a keys
    - Confirm cross-tenant requests are blocked
    - Validate certificate-based tenant identification
-   - Test database-level isolation with RLS policies
 
 **Requirements:**
-- PostgreSQL RLS enforces database-level tenant isolation
-- mTLS certificates identify tenant context for each request
-- Crypto Service routes requests to correct tenant data
+- Tenant isolation enforced at the API level via mTLS certificate identity
+- mTLS certificates scoped to tenant and service identity
 - Cross-tenant access attempts are blocked and logged
 
-### Story 4: Monitor and Scale Crypto Service Deployment
+### Story 4: Monitor and Scale Krypton
 **As a** Platform Mesh Administrator  
-**I want to** monitor Crypto Service performance and scale based on demand  
+**I want to** monitor Krypton performance and scale based on demand  
 **So that** encryption key operations maintain performance SLAs across all tenants  
 
 **Monitoring and Scaling Journey:**
@@ -306,12 +290,12 @@ As a Platform Mesh Administrator, I need to deploy OpenKCM's Crypto Layer servic
 
 ## Technical Architecture
 
-### Crypto Service Deployment Architecture:
+### Krypton Deployment Architecture:
 ```
 Platform Mesh Cluster
 ├── openkcm-system namespace
-│   ├── Crypto Service Pods (3+ replicas)
-│   ├── PostgreSQL Database (RLS enabled)
+│   ├── Krypton Pods (3+ replicas)
+│   ├── Key Metadata Store
 │   ├── Certificate Manager
 │   └── Monitoring Stack
 ├── Tenant Namespaces
@@ -329,7 +313,7 @@ Platform Mesh Cluster
 ```
 Tenant Service (MongoDB) → Platform Mesh Service Discovery
                         ↓
-                    Crypto Service Endpoint Resolution
+                    Krypton Endpoint Resolution
                         ↓
                     mTLS Connection Establishment
                         ↓
@@ -343,9 +327,9 @@ Tenant Service (MongoDB) → Platform Mesh Service Discovery
 ## Requirements
 
 ### Deployment Requirements:
-- **REQ-001**: Crypto Service must deploy with high availability (3+ replicas)
+- **REQ-001**: Krypton must deploy with high availability (3+ replicas)
 - **REQ-002**: Service must register with Platform Mesh service discovery
-- **REQ-003**: PostgreSQL database must be configured with Row-Level Security
+- **REQ-003**: Tenant isolation must be enforced at the API level
 - **REQ-004**: mTLS certificates must be automatically provisioned and rotated
 
 ### Performance Requirements:
@@ -355,7 +339,7 @@ Tenant Service (MongoDB) → Platform Mesh Service Discovery
 - **REQ-008**: Service startup time must be under 60 seconds
 
 ### Security Requirements:
-- **REQ-009**: Tenant isolation must be enforced at network and database levels
+- **REQ-009**: Tenant isolation must be enforced at the API level
 - **REQ-010**: All service communications must use mTLS encryption
 - **REQ-011**: Certificate-based tenant identification must be validated
 - **REQ-012**: Security policies must prevent cross-tenant access
@@ -369,16 +353,16 @@ Tenant Service (MongoDB) → Platform Mesh Service Discovery
 ## Success Criteria
 
 ### Deployment Success:
-- ✅ Crypto Service deployed and running with high availability
+- ✅ Krypton deployed and running with high availability
 - ✅ Service registered and discoverable through Platform Mesh
 - ✅ Multi-tenant isolation configured and validated
 - ✅ Network policies and certificates properly configured
 
 ### Integration Success:
-- ✅ Tenant services (MongoDB, etc.) can discover and connect to Crypto Service
+- ✅ Tenant services (MongoDB, etc.) can discover and connect to Krypton
 - ✅ KMIP protocol communication working correctly
 - ✅ mTLS authentication and tenant identification working
-- ✅ Database-level tenant isolation enforced
+- ✅ API-level tenant isolation enforced
 
 ### Operational Success:
 - ✅ Monitoring dashboards show service health and performance

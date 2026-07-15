@@ -8,7 +8,7 @@ authors:
 
 ## Overview
 
-As an Enterprise Security Administrator, I need to integrate my organization's existing external keystores with OpenKCM's CMK service. This allows me to maintain our Customer Master Keys (L1) in our trusted keystore infrastructure while enabling OpenKCM to derive tenant and service keys for our Platform Mesh applications. The CMK Plugins provide secure connectors to various keystore providers without exposing our master keys.
+As an Enterprise Security Administrator, I need to integrate my organization's existing external keystores with OpenKCM's CMK service. This allows me to maintain our Customer Master Keys (L1) in our trusted keystore infrastructure while enabling OpenKCM to derive tenant and service keys for our platform applications. The CMK Plugins provide secure connectors to various keystore providers without exposing our master keys.
 
 ## Business Context
 

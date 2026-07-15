@@ -1,6 +1,7 @@
 ---
 authors:
   - Aysan
+last_updated: 2026-07-15
 ---
 
 ## Persona
@@ -56,14 +57,14 @@ As a Platform User, I need to enable OpenKCM encryption services from the Platfo
    ✓ Tenant environment created
    ✓ Encryption keys configured  
    ✓ Services can now request encryption keys
-   ✓ CMK UI available at: https://cmk.openkcm.io/tenant/acme-corp-12345"
+   ✓ OpenKCM UI is accessible through your platform account"
    ```
 
 **Requirements:**
 - Simple one-click enablement from marketplace
 - Automatic tenant provisioning within 3 minutes
 - Clear confirmation when service is ready
-- CMK UI immediately accessible after provisioning
+- OpenKCM UI immediately accessible after provisioning
 
 ### Story 2: Automatic Tenant Creation (Behind the Scenes)
 **As a** Platform User  
@@ -89,7 +90,7 @@ As a Platform User, I need to enable OpenKCM encryption services from the Platfo
 4. **Service Integration Setup**: My services can immediately use encryption:
    - MongoDB, PostgreSQL, microservices can request keys
    - mTLS certificates automatically issued for my services
-   - Crypto Service routes my requests to isolated boundaries
+   - Krypton routes my requests to isolated boundaries
 
 **My Experience:**
 - I don't need to understand L2 keys or MTCI standards
@@ -103,15 +104,14 @@ As a Platform User, I need to enable OpenKCM encryption services from the Platfo
 - All my services can immediately access encryption capabilities
 - Complete audit trail maintained for compliance
 
-### Story 3: Access My Tenant Management Interface
+### Story 3: Access My OpenKCM Tenant Dashboard
 **As a** Platform User  
-**I want to** access the CMK UI to manage my organization's encryption settings  
+**I want to** access the OpenKCM UI to manage my organization's encryption settings  
 **So that** I can configure customer-managed keys and monitor my encryption usage  
 
 **User Journey:**
-1. **Access CMK UI**: I click the provided link to access my tenant
-   - URL: `https://cmk.openkcm.io/tenant/acme-corp-12345`
-   - Single sign-on through my Platform account
+1. **Access OpenKCM UI**: I access my tenant through my platform account
+   - Single sign-on through my platform account
 
 2. **View My Tenant Dashboard**: I see my organization's encryption environment
    ```
@@ -149,7 +149,7 @@ As a Platform User, I need to enable OpenKCM encryption services from the Platfo
    - Compliance status and audit logs
 
 **Requirements:**
-- CMK UI accessible immediately after tenant creation
+- OpenKCM UI accessible immediately after tenant creation
 - Clear visibility into tenant status and capabilities
 - Option to configure customer-managed keys
 - Usage analytics and monitoring available
@@ -177,7 +177,7 @@ As a Platform User, I need to enable OpenKCM encryption services from the Platfo
    # Data encrypted with ephemeral keys derived from my tenant boundary
    ```
 
-3. **Monitor Encryption Usage**: I see encryption activity in CMK UI
+3. **Monitor Encryption Usage**: I see encryption activity in OpenKCM
    ```
    Service Integration Update:
    
@@ -214,11 +214,11 @@ PostgreSQL RLS configured for tenant isolation
                 ↓
 mTLS certificate templates created for tenant services
                 ↓
-Crypto Service routing configured for tenant requests
+Krypton routing configured for tenant requests
                 ↓
 Platform User receives "Ready" notification
                 ↓
-Platform User accesses CMK UI
+Platform User accesses OpenKCM UI
                 ↓
 Platform User's services automatically discover OpenKCM
                 ↓
@@ -247,14 +247,14 @@ Customer: Beta Corp (beta-corp-67890)
 ### User Experience Requirements:
 - **REQ-001**: One-click enablement from Platform marketplace
 - **REQ-002**: Automatic tenant provisioning within 3 minutes
-- **REQ-003**: CMK UI accessible immediately after provisioning
+- **REQ-003**: OpenKCM UI accessible immediately after provisioning
 - **REQ-004**: Services integrate with encryption automatically
 
 ### Technical Requirements (Automated by Controller):
 - **REQ-005**: Each tenant gets unique L2 Tenant Encryption Key
 - **REQ-006**: PostgreSQL RLS enforces tenant isolation
 - **REQ-007**: mTLS certificates scoped to tenant boundaries
-- **REQ-008**: Crypto Service routes requests to correct tenant
+- **REQ-008**: Krypton routes requests to correct tenant
 
 ### Security Requirements:
 - **REQ-009**: Multi-Tenant Cryptographic Isolation (MTCI) standard implemented
@@ -267,7 +267,7 @@ Customer: Beta Corp (beta-corp-67890)
 ### User Experience Success:
 - ✅ Platform Users can enable OpenKCM with one click
 - ✅ Tenant environment ready within 3 minutes
-- ✅ CMK UI accessible and easy to navigate
+- ✅ OpenKCM UI accessible and easy to navigate
 - ✅ Services integrate with encryption automatically
 
 ### Security Success:
