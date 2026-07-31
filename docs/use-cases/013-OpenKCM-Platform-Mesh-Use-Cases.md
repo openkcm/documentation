@@ -10,7 +10,7 @@ last_updated: 2026-07-31
 
 OpenKCM integrates with Platform Mesh as a key management service provider. When an account enables OpenKCM, the customer registers their root key once — and from that point, all encryption in their account is governed by that key. The platform cannot access customer data without the customer's explicit consent.
 
-There are three usecase OpenKCM supports depending on how workloads are structured within the account.
+There are three use cases OpenKCM supports depending on how workloads are structured within the account.
 
 ---
 
