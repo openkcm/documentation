@@ -1,14 +1,15 @@
 ---
 authors:
-  - Aysan Mazloumi
+  - Aysan
+last_updated: 2026-07-15
 ---
 
 ## Persona
-**Platform Users** - Anyone with access to an account in KCP who enables OpenKCM via Platform Mesh and accesses the OpenKCM UI for management of the keychain (e.g., switching from CSEK to CMK with HYOK or BYOK). These users interact with the CMK Layer of OpenKCM to configure and manage their customer-managed encryption keys.
+**Platform Users** - Anyone with access to an account in a platform who enables OpenKCM and uses it to manage the keychain (e.g., switching from CSEK to CMK with HYOK or BYOK). These users interact with OpenKCM to configure and manage their customer-managed encryption keys.
 
 ## Overview
 
-As a Platform User, I need to control my encryption keys to maintain data security and compliance. L1 key actions allow me to manage the lifecycle of my Customer Master Keys through the OpenKCM UI.
+As a Platform User, I need to control my encryption keys to maintain data security and compliance. L1 key actions allow me to manage the lifecycle of my Customer Master Keys through OpenKCM.
 
 ## User Stories
 
@@ -18,7 +19,7 @@ As a Platform User, I need to control my encryption keys to maintain data securi
 **So that** my applications can both encrypt new data and decrypt existing data  
 
 **User Journey:**
-1. I log into the OpenKCM UI through my KCP account
+1. I log into OpenKCM through my KCP account
 2. I navigate to my key management dashboard
 3. I select my L1 key and click "Enable"
 4. I receive confirmation that encryption and decryption operations are now active
@@ -30,7 +31,7 @@ As a Platform User, I need to control my encryption keys to maintain data securi
 **So that** I can prevent new data encryption while still accessing existing data  
 
 **User Journey:**
-1. I access the OpenKCM UI and go to key management
+1. I access OpenKCM and go to key management
 2. I select my active L1 key and click "Disable"
 3. I confirm the action understanding it will stop new encryption
 4. I receive confirmation that the key is now in read-only mode

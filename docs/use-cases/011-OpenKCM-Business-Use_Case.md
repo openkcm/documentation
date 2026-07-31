@@ -246,7 +246,7 @@ This directly addresses the requirement for **Red Button testing capability** �
 
 **The answer — through a concrete example:**
 
-A security engineer at a multi-tenant platform (like Platform Mesh) needs to encrypt MongoDB data at rest. Today, they configure MongoDB to connect to Krypton Gateway via KMIP over mTLS:
+A security engineer at a multi-tenant platform needs to encrypt MongoDB data at rest. Today, they configure MongoDB to connect to Krypton Gateway via KMIP over mTLS:
 
 ```yaml
 security:
@@ -406,11 +406,11 @@ Of course, end-to-end testing is essential to ensure the full chain works correc
 
 ---
 
-## Demo Scenario: Platform Mesh + MongoDB
+## Demo Scenario: Platform + MongoDB
 
 ### Phase 1: Setup — "Show It Works"
 
-**Story:** A security engineer on the Platform Mesh platform decides to enable encryption at rest for MongoDB using Krypton.
+**Story:** A security engineer on a platform account decides to enable encryption at rest for MongoDB using Krypton.
 
 1. **Before encryption:** Show that MongoDB data is stored in plaintext on disk.
 2. **Enable Krypton:** Configure MongoDB to connect to Krypton Gateway via KMIP.

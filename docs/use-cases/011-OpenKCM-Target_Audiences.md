@@ -6,7 +6,7 @@
 
 **The answer — through a concrete example:**
 
-A security engineer at a multi-tenant platform (like Platform Mesh) needs to encrypt MongoDB data at rest. Today, they configure MongoDB to connect to Krypton Gateway via KMIP over mTLS:
+A security engineer at a multi-tenant platform needs to encrypt MongoDB data at rest. Today, they configure MongoDB to connect to Krypton Gateway via KMIP over mTLS:
 
 ```yaml
 security:

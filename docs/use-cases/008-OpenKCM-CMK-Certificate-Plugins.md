@@ -4,11 +4,11 @@ authors:
 ---
 
 ## Persona
-**CMK API Server** - The OpenKCM Customer Managed Key API service that needs to automatically generate x509 client certificates for tenant authentication to external keystores. The CMK API Server integrates with OpenBao PKI service (running on Platform Mesh) to request, generate, and manage client certificates on-demand for secure keystore connections.
+**CMK API Server** - The OpenKCM Customer Managed Key API service that needs to automatically generate x509 client certificates for tenant authentication to external keystores. The CMK API Server integrates with OpenBao PKI service to request, generate, and manage client certificates on-demand for secure keystore connections.
 
 ## Overview
 
-As the CMK API Server, I need to integrate with the OpenBao PKI service running on Platform Mesh to automatically generate x509 client certificates for tenant authentication to external keystores. When tenants configure keystore connections that require client certificate authentication, I must request properly signed certificates from OpenBao PKI and configure them for secure mTLS connections to external keystores.
+As the CMK API Server, I need to integrate with the OpenBao PKI service to automatically generate x509 client certificates for tenant authentication to external keystores. When tenants configure keystore connections that require client certificate authentication, I must request properly signed certificates from OpenBao PKI and configure them for secure mTLS connections to external keystores.
 
 ## Business Context
 
@@ -18,17 +18,17 @@ The CMK API Server needs automated certificate generation because:
 - **Automation**: Certificate generation must be seamless during tenant onboarding
 - **Certificate Lifecycle**: Automatic renewal and rotation without service disruption
 - **Compliance**: All certificates must follow organizational PKI policies
-- **Integration**: Leverage existing OpenBao PKI infrastructure on Platform Mesh
+- **Integration**: Leverage existing OpenBao PKI infrastructure
 
 ## User Stories
 
 ### Story 1: Initialize OpenBao PKI Plugin for Certificate Operations
 **As the** CMK API Server  
-**I want to** establish connection with OpenBao PKI service on Platform Mesh  
+**I want to** establish connection with OpenBao PKI service  
 **So that** I can request x509 client certificates for tenant keystore authentication  
 
 **Technical Journey:**
-1. **Discover OpenBao PKI Service**: I discover OpenBao PKI through Platform Mesh service registry
+1. **Discover OpenBao PKI Service**: I discover OpenBao PKI through the platform service registry
    ```yaml
    # Service discovery for OpenBao PKI
    apiVersion: v1
@@ -435,7 +435,7 @@ CMK API Server
 ├── Certificate Renewal Scheduler
 └── Keystore Connection Manager
 
-Platform Mesh Integration
+Platform Integration
 ├── OpenBao PKI Service (platform-services namespace)
 ├── Kubernetes Service Account Authentication
 ├── Service Discovery for OpenBao endpoint

@@ -1,14 +1,15 @@
 ---
 authors:
-  - Aysan 
+  - Aysan
+last_updated: 2026-07-15
 ---
 
 ## Persona
-**Tenant Administrator** - A user who manages MongoDB in Platform Mesh and needs to set up end-to-end encryption using their own L1 Customer Master Key through OpenKCM.
+**Tenant Administrator** - A user who manages MongoDB in a platform and needs to set up end-to-end encryption using their own L1 Customer Master Key through OpenKCM.
 
 ## Overview
 
-As a Tenant Administrator, I need to enable OpenKCM for my tenant, configure my L1 Customer Master Key through the CMK UI, and ensure my MongoDB service can request encryption keys to protect database records with my customer-controlled encryption.
+As a Tenant Administrator, I need to enable OpenKCM for my account, configure my L1 Customer Master Key through the OpenKCM UI, and ensure my MongoDB service can request encryption keys to protect database records with my customer-controlled encryption.
 
 ## User Stories
 
@@ -18,25 +19,25 @@ As a Tenant Administrator, I need to enable OpenKCM for my tenant, configure my 
 **So that** I can manage customer-controlled encryption for my MongoDB data  
 
 **User Journey:**
-1. I create or access my tenant account in KCP (Platform Mesh)
-2. Platform Mesh detects my tenant and automatically provisions OpenKCM services
-3. I receive notification that OpenKCM CMK UI is available
-4. I can now access the CMK web interface to configure my encryption keys
-5. Backend Crypto Service is automatically configured and ready for MongoDB integration
+1. I create or access my account in the platform
+2. The platform automatically provisions OpenKCM services for my account
+3. I receive notification that OpenKCM is available
+4. I can now configure my encryption keys through OpenKCM
+5. Krypton is automatically configured and ready for MongoDB integration
 
 **Requirements:**
-- Platform Mesh automatically provisions OpenKCM when tenant is created
-- CMK UI becomes accessible within 5 minutes of tenant creation
-- Crypto Service is configured and running for my tenant
+- Platform automatically provisions OpenKCM when account is created
+- OpenKCM becomes accessible within 5 minutes of account creation
+- Krypton is configured and running for my account
 - I receive clear notification when services are ready
 
 ### Story 2: Upload My L1 Customer Master Key
 **As a** Tenant Administrator  
-**I want to** configure my L1 Customer Master Key in the CMK UI  
+**I want to** configure my L1 Customer Master Key in the OpenKCM UI  
 **So that** all my data encryption uses my own customer-controlled key  
 
 **User Journey:**
-1. I log into the OpenKCM CMK UI with my tenant credentials
+1. I log into OpenKCM with my tenant credentials
 2. I navigate to "Master Key Configuration" section
 3. I choose my key management option:
    - **Option A (BYOK)**: I provide my AWS KMS key ARN and configure access permissions
@@ -46,7 +47,7 @@ As a Tenant Administrator, I need to enable OpenKCM for my tenant, configure my 
 6. System confirms my L1 key is ready for encryption operations
 
 **Requirements:**
-- CMK UI supports both BYOK (AWS KMS, Azure Key Vault) and HYOK (HSM) configurations
+- OpenKCM UI supports both BYOK (AWS KMS, Azure Key Vault) and HYOK (HSM) configurations
 - Connection test validates L1 key accessibility before saving
 - Configuration changes take effect within 2 minutes
 - Clear status indicators show L1 key state (Inactive/Active/Error)
@@ -54,7 +55,7 @@ As a Tenant Administrator, I need to enable OpenKCM for my tenant, configure my 
 
 ### Story 3: MongoDB Requests Encryption Key from OpenKCM
 **As a** MongoDB service in my tenant  
-**I want to** request encryption keys from OpenKCM Crypto Service  
+**I want to** request encryption keys from Krypton  
 **So that** I can encrypt database records using the tenant's L1 Customer Master Key  
 
 **Technical Journey:**
@@ -71,8 +72,8 @@ As a Tenant Administrator, I need to enable OpenKCM for my tenant, configure my 
    }
    ```
 
-2. **MongoDB Authentication**: I authenticate with OpenKCM Crypto Service
-   - Use mTLS certificate provided by Platform Mesh
+2. **MongoDB Authentication**: I authenticate with Krypton
+   - Use mTLS certificate provided by the platform
    - Certificate includes my tenant scope and MongoDB service identity
 
 3. **Key Request**: I request encryption key via KMIP protocol
@@ -83,8 +84,8 @@ As a Tenant Administrator, I need to enable OpenKCM for my tenant, configure my 
    - Service: mongodb-prod
    ```
 
-4. **Key Derivation**: Crypto Service processes my request
-   - Validates I'm authorized for "my-tenant" 
+4. **Key Derivation**: Krypton processes my request
+   - Validates I'm authorized for "my-tenant"
    - Derives ephemeral encryption key from the configured L1 Customer Master Key
    - Returns fresh encryption key for this operation
 
@@ -109,11 +110,11 @@ As a Tenant Administrator, I need to enable OpenKCM for my tenant, configure my 
 
 6. **Audit Logging**: All operations are logged
    - MongoDB logs: Successful data encryption for tenant
-   - Crypto Service logs: Encryption key provided to MongoDB for my-tenant
-   - CMK Service logs: L1 key used for encryption key derivation
+   - Krypton logs: Encryption key provided to MongoDB for my-tenant
+   - OpenKCM logs: L1 key used for encryption key derivation
 
 **Requirements:**
-- MongoDB authenticates successfully with Crypto Service using tenant-scoped certificates
+- MongoDB authenticates successfully with Krypton using tenant-scoped certificates
 - Encryption key requests complete within 100ms
 - Each encryption operation uses a fresh ephemeral key
 - Keys are derived from the tenant's configured L1 Customer Master Key
@@ -123,15 +124,15 @@ As a Tenant Administrator, I need to enable OpenKCM for my tenant, configure my 
 ## End-to-End Flow
 
 ```
-1. Tenant Administrator → Enable OpenKCM (Platform Mesh provisions services)
+1. Tenant Administrator → Enable OpenKCM (platform provisions services)
                     ↓
-2. Tenant Administrator → Configure L1 Key in CMK UI (BYOK/HYOK)
+2. Tenant Administrator → Configure L1 Key in OpenKCM UI (BYOK/HYOK)
                     ↓
 3. L1 Customer Master Key → Active and available for encryption operations
                     ↓
-4. MongoDB → Request encryption key from Crypto Service
+4. MongoDB → Request encryption key from Krypton
                     ↓
-5. Crypto Service → Derive ephemeral key from L1 Customer Master Key
+5. Krypton → Derive ephemeral key from L1 Customer Master Key
                     ↓
 6. MongoDB → Encrypt data using derived key, store encrypted data
                     ↓
@@ -141,11 +142,11 @@ As a Tenant Administrator, I need to enable OpenKCM for my tenant, configure my 
 ## Requirements
 
 ### Functional Requirements:
-- **REQ-001**: Platform Mesh must automatically provision OpenKCM services for new tenants
-- **REQ-002**: CMK UI must support L1 key configuration (BYOK and HYOK)
+- **REQ-001**: Platform must automatically provision OpenKCM services for new accounts
+- **REQ-002**: OpenKCM UI must support L1 key configuration (BYOK and HYOK)
 - **REQ-003**: System must validate L1 key connectivity before activation
-- **REQ-004**: MongoDB must authenticate with Crypto Service using mTLS
-- **REQ-005**: Crypto Service must derive encryption keys from configured L1 key
+- **REQ-004**: MongoDB must authenticate with Krypton using mTLS
+- **REQ-005**: Krypton must derive encryption keys from configured L1 key
 - **REQ-006**: MongoDB must encrypt sensitive data using OpenKCM-provided keys
 - **REQ-007**: All operations must maintain tenant isolation
 
@@ -164,13 +165,13 @@ As a Tenant Administrator, I need to enable OpenKCM for my tenant, configure my 
 ## Success Criteria
 
 ### Setup Phase Success:
-- ✅ OpenKCM services provisioned automatically when tenant created
-- ✅ Tenant can access CMK UI and configure L1 Customer Master Key
+- ✅ OpenKCM services provisioned automatically when account created
+- ✅ Tenant can access OpenKCM and configure L1 Customer Master Key
 - ✅ L1 key connection tested and confirmed active
-- ✅ MongoDB service registered and authenticated with Crypto Service
+- ✅ MongoDB service registered and authenticated with Krypton
 
 ### Operational Phase Success:
-- ✅ MongoDB successfully requests encryption keys from Crypto Service
+- ✅ MongoDB successfully requests encryption keys from Krypton
 - ✅ Data encrypted using keys derived from tenant's L1 Customer Master Key
 - ✅ Tenant isolation maintained (MongoDB only accesses own tenant's keys)
 - ✅ Performance requirements met for all key operations
@@ -187,5 +188,5 @@ As a Tenant Administrator, I need to enable OpenKCM for my tenant, configure my 
 - **Seamless Integration**: MongoDB encryption works transparently with minimal setup
 - **Regulatory Compliance**: Customer-controlled encryption meets compliance requirements
 - **Data Security**: All database records protected with customer's own keys
-- **Operational Simplicity**: Automated provisioning with simple UI configuration
+- **Operational Simplicity**: Automated provisioning with simple configuration through OpenKCM
 - **Audit Ready**: Full traceability from key configuration to data encryption
